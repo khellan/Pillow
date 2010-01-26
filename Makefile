@@ -1,12 +1,9 @@
 ERL          ?= erl
-EBIN_DIRS    := $(wildcard webmachine/ebin)
+EBIN_DIRS    := $(wildcard deps/*/ebin)
 APP          := pillow
 
-all: ebin webmachine erl ebin/$(APP).app
+all: ebin erl ebin/$(APP).app
 all_boot: all make_boot
-
-webmachine:
-	@(cd webmachine;$(MAKE))
 
 erl:
 	@$(ERL) -pa $(EBIN_DIRS) -noinput +B \
