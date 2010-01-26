@@ -12,6 +12,7 @@ ensure_started(App) ->
 %% @spec start() -> ok
 %% @doc Start the Pillow server.
 start() ->
+    application:start(ibrowse),
     ensure_started(crypto),
     ensure_started(webmachine),
     application:start(pillow).
@@ -22,4 +23,5 @@ stop() ->
     Res = application:stop(pillow),
     application:stop(webmachine),
     application:stop(crypto),
+    application:stop(ibrowse),
     Res.
