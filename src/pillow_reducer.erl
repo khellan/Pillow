@@ -1,6 +1,6 @@
 -module(pillow_reducer).
 -export([init/1, to_json/2, content_types_provided/2]).
--include_lib("webmachine/include/webmachine.hrl").
+-include_lib("deps/webmachine/include/webmachine.hrl").
 
 content_types_provided(ReqData, Context) ->
     {[{"application/json", to_json}], ReqData, Context}.
