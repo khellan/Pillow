@@ -9,9 +9,8 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 dispatch_map() ->
-    [{['doc', '*'], pillow_router, []},
-     {['view', '*'], pillow_reducer, []}
-    ].
+    [{["doc", '*'], pillow_router, []},
+     {["view", '*'], pillow_reducer, []}].
 
 %% @doc supervisor callback.
 init([]) ->
