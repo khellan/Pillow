@@ -12,8 +12,18 @@ dispatch_map() ->
     [{["doc", '*'], pillow_router, []},
      {["view", '*'], pillow_reducer, []}].
 
+init_routing_table() ->
+    ets:new(routingTable, [set, named_table, public]).
+
+fill_routing_table() ->
+    ets:insert(routingTable, {1, "http://localhost:5984/"}),
+    ets:insert(routingTable, {2, "http://localhost:5997/"}),
+    ok.
+
 %% @doc supervisor callback.
 init([]) ->
+    init_routing_table(),
+    fill_routing_table(),
     Ip = case os:getenv("WEBMACHINE_IP") of false -> "0.0.0.0"; Any -> Any end,
     WebConfig = [
 		 {ip, Ip},

@@ -1,10 +1,22 @@
 -module(pillow_router).
--export([init/1, to_html/2]).
+-export([init/1, to_json/2, content_types_provided/2]).
 -include_lib("deps/webmachine/include/webmachine.hrl").
+
+content_types_provided(ReqData, Context) ->
+    {[{"text/html", to_json}], ReqData, Context}.
 
 init([]) -> {ok, undefined}.
 
-to_html(ReqData, Context) ->
-    Path = io_lib:format("http://localhost:5984/~s", [wrq:disp_path(ReqData)]),
-    {ok, _Code, _Headers, Body} = ibrowse:send_req(Path, [], get),
-    {Body, ReqData, Context}.
+make_target_path(Server, ReqData) ->
+    lists:flatten([Server, wrq:disp_path(ReqData)]).
+
+get_single_server_result(Server, ReqData) ->
+    {ok, _Code, _Headers, Body} = ibrowse:send_req(make_target_path(Server, ReqData), [], get),
+    mochijson2:decode(Body).
+
+get_all_server_results(ReqData) ->
+    lists:map(fun({_, Server}) -> get_single_server_result(Server, ReqData) end, ets:tab2list(routingTable)).
+
+to_json(ReqData, Context) ->
+    Results = mochijson2:encode(get_all_server_results(ReqData)),
+    {Results, ReqData, Context}.
