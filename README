@@ -1,1 +1,5 @@
 Pillow is a combined router and rereducer for CouchDB.
+
+Dependencies:
+- webmachine
+- ibrowse from jungerl
