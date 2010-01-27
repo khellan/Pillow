@@ -5,6 +5,7 @@
   {modules, [pillow,
              pillow_app,
              pillow_sup,
+             pillow_routing_table,
              pillow_router,
              pillow_reducer]},
   {registered, []},

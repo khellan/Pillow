@@ -19,7 +19,7 @@ get_single_server_result(Server, ReqData) ->
     mochijson2:decode(Body).
 
 get_all_server_results(ReqData) ->
-    lists:map(fun({_, Server}) -> get_single_server_result(Server, ReqData) end, ets:tab2list(routingTable)).
+    lists:map(fun({_, Server}) -> get_single_server_result(Server, ReqData) end, pillow_routing_table:to_list(pillow_routing_table:init())).
 
 to_json(ReqData, Context) ->
     Results = mochijson2:encode(get_all_server_results(ReqData)),
