@@ -7,47 +7,18 @@ content_types_provided(ReqData, Context) ->
     
 init([]) -> {ok, undefined}.
 
-% This is the actual doer part of sum_reducer
-%
-% TODO: Move to a separate reducers module
-add_tuple(Tuple, Acc) ->
-    case Tuple of
-        {struct, Pair} ->
-            {value, {<<"key">>, Key}} = lists:keysearch(<<"key">>, 1, Pair),
-            {value, {<<"value">>, Value}} = lists:keysearch(<<"value">>, 1, Pair),
-            case dict:find(Key, Acc) of
-                {ok, OldValue} -> dict:store(Key, OldValue + Value, Acc);
-                error -> dict:store(Key, Value, Acc)
-            end;
-        _Other -> error
-    end.
-
 % Simple sum reducer using add_tuple
-sum_reducer(List, Reducer) ->
+reduce(List, Reducer) ->
     Result = dict:to_list(lists:foldl(fun(Tuple, Acc) -> Reducer(Tuple, Acc) end, dict:new(), List)),
     lists:map(fun(Tuple) -> {struct, [{<<"key">>, element(1, Tuple)}, {<<"value">>, element(2, Tuple)}]} end, Result).
 
-% Retrieves the specified reducer
 %
-% TODO: Move to a separate reducers module
-get_reducer(Db, Design, View) ->
-    case {Db, Design, View} of
-        {"userprofiles", "reports", "clicked_recommendations_vendor_timestamps"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
-        {"userprofiles", "reports", "clicked_recommendations_vendor_totals"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
-        {"userprofiles", "reports", "purchase_count"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
-        {"userprofiles", "reports", "recommendations_vendor_timestamps"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
-        {"userprofiles", "reports", "recommendations_vendor_totals"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
-        {"userprofiles", "reports", "vendor_timestamps"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
-        {"userprofiles", "reports", "vendor_totals"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
-        {"userprofiles", "reports", "vendor_uniques"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
-        _Other -> fun(List) -> List end
+do_reduce(Db, Design, View) ->
+    case reducers:get_reducer(Db, Design, View) of
+        other -> fun(List) -> List end;
+        Reducer -> fun(List) -> reduce(List, Reducer) end
     end.
-%    case dict:find({Db, Design, View}, get_reducers()) of
-%        {ok, Reducer} ->Reducer;
-%        error -> fun(List) -> List end
-%    end.
-
-
+    
 % Combines the query string key, value pairs into a query string
 make_query_string(Params) ->
     lists:map(fun({Key, Value}) -> io_lib:format("~s=~s", [Key, Value]) end, Params).
@@ -90,7 +61,7 @@ extract_rows([Head | Tail]) ->
 
 % Applies the correct reducer to the merged result
 reduce_result(Db, Design, View, RawResult) ->
-    {struct, [{<<"rows">>, (get_reducer(Db, Design, View))(lists:flatten(extract_rows(RawResult)))}]}.
+    {struct, [{<<"rows">>, (do_reduce(Db, Design, View))(lists:flatten(extract_rows(RawResult)))}]}.
 %    [Head | Tail] = RawResult,
 %    Head.
 

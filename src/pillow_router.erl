@@ -15,7 +15,9 @@ get_single_server_result(Server, ReqData) ->
     mochijson2:decode(Body).
 
 get_all_server_results(ReqData) ->
-    get_single_server_result(pillow_routing_table:get(pillow_routing_table:hash("a"), pillow_routing_table:init()), ReqData).
+    PathElements = wrq:path_tokens(ReqData),
+    {Db, Id} = {lists:nth(1, PathElements), lists:nth(2, PathElements)},
+    get_single_server_result(pillow_routing_table:get(pillow_routing_table:hash(Db, Id), pillow_routing_table:init()), ReqData).
 
 to_json(ReqData, Context) ->
     Results = mochijson2:encode(get_all_server_results(ReqData)),
