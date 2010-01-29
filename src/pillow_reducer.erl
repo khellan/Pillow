@@ -9,7 +9,7 @@ init([]) -> {ok, undefined}.
 
 % This is the actual doer part of sum_reducer
 %
-% TODO: Determine if this is the only reducer specific part
+% TODO: Move to a separate reducers module
 add_tuple(Tuple, Acc) ->
     case Tuple of
         {struct, Pair} ->
@@ -23,25 +23,23 @@ add_tuple(Tuple, Acc) ->
     end.
 
 % Simple sum reducer using add_tuple
-%
-% TODO: Determine if this is a general function
-sum_reducer(List) ->
-    Result = dict:to_list(lists:foldl(fun(Tuple, Acc) -> add_tuple(Tuple, Acc) end, dict:new(), List)),
+sum_reducer(List, Reducer) ->
+    Result = dict:to_list(lists:foldl(fun(Tuple, Acc) -> Reducer(Tuple, Acc) end, dict:new(), List)),
     lists:map(fun(Tuple) -> {struct, [{<<"key">>, element(1, Tuple)}, {<<"value">>, element(2, Tuple)}]} end, Result).
 
 % Retrieves the specified reducer
 %
-% TODO: Move this to a separate module
+% TODO: Move to a separate reducers module
 get_reducer(Db, Design, View) ->
     case {Db, Design, View} of
-        {"userprofiles", "reports", "clicked_recommendations_vendor_timestamps"} -> fun(List) -> sum_reducer(List) end;
-        {"userprofiles", "reports", "clicked_recommendations_vendor_totals"} -> fun(List) -> sum_reducer(List) end;
-        {"userprofiles", "reports", "purchase_count"} -> fun(List) -> sum_reducer(List) end;
-        {"userprofiles", "reports", "recommendations_vendor_timestamps"} -> fun(List) -> sum_reducer(List) end;
-        {"userprofiles", "reports", "recommendations_vendor_totals"} -> fun(List) -> sum_reducer(List) end;
-        {"userprofiles", "reports", "vendor_timestamps"} -> fun(List) -> sum_reducer(List) end;
-        {"userprofiles", "reports", "vendor_totals"} -> fun(List) -> sum_reducer(List) end;
-        {"userprofiles", "reports", "vendor_uniques"} -> fun(List) -> sum_reducer(List) end;
+        {"userprofiles", "reports", "clicked_recommendations_vendor_timestamps"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
+        {"userprofiles", "reports", "clicked_recommendations_vendor_totals"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
+        {"userprofiles", "reports", "purchase_count"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
+        {"userprofiles", "reports", "recommendations_vendor_timestamps"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
+        {"userprofiles", "reports", "recommendations_vendor_totals"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
+        {"userprofiles", "reports", "vendor_timestamps"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
+        {"userprofiles", "reports", "vendor_totals"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
+        {"userprofiles", "reports", "vendor_uniques"} -> fun(List) -> sum_reducer(List, fun(T, A) -> add_tuple(T,A) end) end;
         _Other -> fun(List) -> List end
     end.
 %    case dict:find({Db, Design, View}, get_reducers()) of
