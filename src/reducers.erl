@@ -1,5 +1,6 @@
 -module(reducers).
 -export([get_reducer/3]).
+-vsn(0.1).
 
 % This is the actual doer part of sum reducer
 sum(Tuple, Acc) ->
@@ -28,5 +29,3 @@ get_reducer(Db, Design, View) ->
         {"userprofiles", "filtering", "brand_totals"} -> fun(T, A) -> sum(T,A) end;
         _Other -> other
     end.
-
-
