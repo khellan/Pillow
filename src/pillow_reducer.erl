@@ -30,8 +30,11 @@ make_target_path(Server, ReqData) ->
 
 % Retrieves the map reduce result from a single server
 get_single_server_result(Server, ReqData, Pid) ->
-    {ok, _Code, _Headers, Body} = ibrowse:send_req(make_target_path(Server, ReqData), [], get),
-    Pid ! {self(), mochijson2:decode(Body)}.
+    TargetPath = make_target_path(Server, ReqData),
+    case ibrowse:send_req(TargetPath, [], get) of
+        {ok, _Code, _Headers, Body} -> Pid ! {self(), mochijson2:decode(Body)};
+        {error, conn_failed} -> erlang:error(["Connection Failed", TargetPath])
+    end.
 
 % Spawns a get_single_server_result for a single server
 single_server_result_retriever(Server, ReqData) ->
