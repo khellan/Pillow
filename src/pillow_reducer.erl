@@ -1,11 +1,25 @@
 -module(pillow_reducer).
--export([init/1, to_json/2, content_types_provided/2, get_single_server_result/3]).
+-export([init/1, to_json/2, content_types_provided/2, get_single_server_result/3, update_view_map/0]).
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 content_types_provided(ReqData, Context) ->
     {[{"text/html", to_json}], ReqData, Context}.
     
 init([]) -> {ok, undefined}.
+
+%%--------------------------------------------------------------------
+%% Function: update_view_map/0
+%% Description: Reloads the view map
+%% Returns: {upgrade, PreVersion, PostVersion}
+%%--------------------------------------------------------------------
+update_view_map() ->
+    [{attributes, PreAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, reducers:module_info()),
+    [{vsn, [PreVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PreAttributes),
+    code:purge(reducers),
+    code:load_file(reducers),
+    [{attributes, PostAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, reducers:module_info()),
+    [{vsn, [PostVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PostAttributes),
+    {upgrade, PreVersion, PostVersion}.
 
 % Simple sum reducer using add_tuple
 reduce(List, Reducer) ->
