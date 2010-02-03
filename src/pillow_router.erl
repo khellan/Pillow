@@ -17,7 +17,12 @@ content_types_provided(ReqData, Context) ->
 %%--------------------------------------------------------------------
 init([]) -> {ok, undefined}.
 
-make_target_path(Server, ReqData) ->
+%%--------------------------------------------------------------------
+%% Function: make_target_url/2
+%% Description: Combines Server and ReqData into the target url
+%% Returns: TargetUrl
+%%--------------------------------------------------------------------
+make_target_url(Server, ReqData) ->
     lists:flatten([Server, wrq:disp_path(ReqData)]).
 
 %%--------------------------------------------------------------------
@@ -26,7 +31,7 @@ make_target_path(Server, ReqData) ->
 %% Returns: The result retrieved from the server
 %%--------------------------------------------------------------------
 get_single_server_result(Server, ReqData) ->
-    {ok, _Code, _Headers, Body} = ibrowse:send_req(make_target_path(Server, ReqData), [], get),
+    {ok, _Code, _Headers, Body} = ibrowse:send_req(make_target_url(Server, ReqData), [], get),
     mochijson2:decode(Body).
 
 %%--------------------------------------------------------------------
