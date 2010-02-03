@@ -31,7 +31,11 @@ make_target_url(Server, ReqData) ->
 %% Returns: The result retrieved from the server
 %%--------------------------------------------------------------------
 get_single_server_result(Server, ReqData) ->
-    {ok, _Code, _Headers, Body} = ibrowse:send_req(make_target_url(Server, ReqData), [], get),
+    Method = wrq:method(ReqData),
+    {ok, _Code, _Headers, Body} = case Method of
+        'GET' -> ibrowse:send_req(make_target_url(Server, ReqData), [], get);
+        _ -> ibrowse:send_req(make_target_url(Server, ReqData), [], Method, wrq:req_body(ReqData))
+    end,
     mochijson2:decode(Body).
 
 %%--------------------------------------------------------------------
