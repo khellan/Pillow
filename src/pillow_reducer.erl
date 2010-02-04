@@ -45,7 +45,7 @@ to_json(ReqData, Context) ->
 %%--------------------------------------------------------------------
 content_types_provided(ReqData, Context) ->
     {[{"text/html", to_json}], ReqData, Context}.
-    
+
 %%--------------------------------------------------------------------
 %% Function: get_single_server_result/3
 %% Description: Retrieves the map reduce result from a single server
@@ -134,14 +134,13 @@ single_server_result_retriever(Server, ReqData) ->
 %%    1 second
 %% Returns: A list of all the server responses
 %%--------------------------------------------------------------------
-get_all_responses([]) ->
-    {};
+get_all_responses([]) -> [];
 get_all_responses(Servers) ->
     receive
         {Pid, Response} ->
             NewServers = lists:delete(Pid, Servers),
             lists:flatten([Response, get_all_responses(NewServers)])
-        after 1000 -> {}
+        after 5000 -> []
     end.
 
 %%--------------------------------------------------------------------
