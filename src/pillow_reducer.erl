@@ -149,8 +149,7 @@ get_all_responses(Servers) ->
 %%    results
 %% Returns: A list of the values from the rows fields in the results
 %%--------------------------------------------------------------------
-extract_rows([]) ->
-    [];
+extract_rows([]) -> [];
 extract_rows([Head | Tail]) ->
     case Head of
         {struct, SubSet} ->
