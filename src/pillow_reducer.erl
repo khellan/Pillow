@@ -155,7 +155,7 @@ extract_rows([Head | Tail]) ->
         {struct, SubSet} ->
             {value, {<<"rows">>, Rows}} = lists:keysearch(<<"rows">>, 1, SubSet),
             [Rows | extract_rows(Tail)];
-        _Other -> []
+        _Other -> extract_rows(Tail)
     end.
 
 %%--------------------------------------------------------------------
