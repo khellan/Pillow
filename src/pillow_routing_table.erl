@@ -17,14 +17,16 @@
 -vsn(0.1).
 
 %%--------------------------------------------------------------------
-%% Function: fill_routing_table/1
-%% Description: Creates and fills the routing table
-%% Returns: The new dict
+%% EXPORTED FUNCTIONS
 %%--------------------------------------------------------------------
-fill_routing_table() ->
-    Dict1 = dict:store(1, "http://localhost:5985/", dict:new()),
-    Dict2 = dict:store(2, "http://localhost:5986/", Dict1),
-    dict:store(3, "http://localhost:5987/", Dict2).
+
+%%--------------------------------------------------------------------
+%% Function: init/0
+%% Description: Creates and returns a new routing table
+%% Returns: The new routing table
+%%--------------------------------------------------------------------
+init() ->
+    fill_routing_table().
 
 %%--------------------------------------------------------------------
 %% Function: hash/2
@@ -40,14 +42,6 @@ hash(Db, Id) ->
     end.
 
 %%--------------------------------------------------------------------
-%% Function: get/2
-%% Description: Retrieves the requested Value from Dict
-%% Returns: The Value of Key in Dict
-%%--------------------------------------------------------------------
-get(Key, Dict) ->
-    dict:fetch(Key, Dict).
-    
-%%--------------------------------------------------------------------
 %% Function: to_list/1
 %% Description: Creates a list of the values in Dict
 %% Returns: A list with values from Dict
@@ -56,9 +50,23 @@ to_list(Dict) ->
     dict:to_list(Dict).
 
 %%--------------------------------------------------------------------
-%% Function: init/0
-%% Description: Creates and returns a new routing table
-%% Returns: The new routing table
+%% Function: get/2
+%% Description: Retrieves the requested Value from Dict
+%% Returns: The Value of Key in Dict
 %%--------------------------------------------------------------------
-init() ->
-    fill_routing_table().
+get(Key, Dict) ->
+    dict:fetch(Key, Dict).
+    
+%%--------------------------------------------------------------------
+%% INTERNAL FUNCTIONS
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
+%% Function: fill_routing_table/1
+%% Description: Creates and fills the routing table
+%% Returns: The new dict
+%%--------------------------------------------------------------------
+fill_routing_table() ->
+    Dict1 = dict:store(1, "http://localhost:5985/", dict:new()),
+    Dict2 = dict:store(2, "http://localhost:5986/", Dict1),
+    dict:store(3, "http://localhost:5987/", Dict2).

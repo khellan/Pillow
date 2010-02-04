@@ -16,17 +16,8 @@
 -export([start/0, stop/0, update_routing_table/0]).
 
 %%--------------------------------------------------------------------
-%% Function: ensure_started/1
-%% Description: Starts App if it's not started
-%% Returns: ok
+%% EXPORTED FUNCTIONS
 %%--------------------------------------------------------------------
-ensure_started(App) ->
-    case application:start(App) of
-	ok ->
-	    ok;
-	{error, {already_started, App}} ->
-	    ok
-    end.
 
 %%--------------------------------------------------------------------
 %% Function: start/0
@@ -65,3 +56,19 @@ update_routing_table() ->
     [{vsn, [PostVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PostAttributes),
     {upgrade, PreVersion, PostVersion}.
 
+%%--------------------------------------------------------------------
+%% INTERNAL FUNCTIONS
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
+%% Function: ensure_started/1
+%% Description: Starts App if it's not started
+%% Returns: ok
+%%--------------------------------------------------------------------
+ensure_started(App) ->
+    case application:start(App) of
+	ok ->
+	    ok;
+	{error, {already_started, App}} ->
+	    ok
+    end.

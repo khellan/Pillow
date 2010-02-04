@@ -18,16 +18,16 @@
 -export([start_link/0,init/1]).
 
 %%--------------------------------------------------------------------
+%% EXPORTED FUNCTIONS
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
 %% Function: start_link/0
 %% Description: Starts the supervisor
 %% Returns: ServerRet
 %%--------------------------------------------------------------------
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
-
-dispatch_map() ->
-    [{["doc", '*'], pillow_router, []},
-     {["view", '*'], pillow_reducer, []}].
 
 %%--------------------------------------------------------------------
 %% Function: init/1
@@ -47,3 +47,16 @@ init([]) ->
 	   permanent, 5000, worker, dynamic},
     Processes = [Web],
     {ok, {{one_for_one, 10, 10}, Processes}}.
+
+%%--------------------------------------------------------------------
+%% INTERNAL FUNCTIONS
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
+%% Function: dispatch_map/0
+%% Description: Defines the dispatch map for webmachine
+%% Returns: The dispatch map
+%%--------------------------------------------------------------------
+dispatch_map() ->
+    [{["doc", '*'], pillow_router, []},
+     {["view", '*'], pillow_reducer, []}].

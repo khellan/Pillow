@@ -17,22 +17,8 @@
 -vsn(0.1).
 
 %%--------------------------------------------------------------------
-%% Function: sum/2
-%% Description: Adds the value for the Key in Tuple to the value for
-%%    that Key in Acc
-%% Returns: The new version of Acc or error
+%% EXPORTED FUNCTIONS
 %%--------------------------------------------------------------------
-sum(Tuple, Acc) ->
-    case Tuple of
-        {struct, Pair} ->
-            {value, {<<"key">>, Key}} = lists:keysearch(<<"key">>, 1, Pair),
-            {value, {<<"value">>, Value}} = lists:keysearch(<<"value">>, 1, Pair),
-            case dict:find(Key, Acc) of
-                {ok, OldValue} -> dict:store(Key, OldValue + Value, Acc);
-                error -> dict:store(Key, Value, Acc)
-            end;
-        _Other -> error
-    end.
 
 %%--------------------------------------------------------------------
 %% Function: get_reducer/3
@@ -51,4 +37,26 @@ get_reducer(Db, Design, View) ->
         {"userprofiles", "reports", "vendor_uniques"} -> fun(T, A) -> sum(T,A) end;
         {"userprofiles", "filtering", "brand_totals"} -> fun(T, A) -> sum(T,A) end;
         _Other -> other
+    end.
+
+%%--------------------------------------------------------------------
+%% INTERNAL FUNCTIONS
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
+%% Function: sum/2
+%% Description: Adds the value for the Key in Tuple to the value for
+%%    that Key in Acc
+%% Returns: The new version of Acc or error
+%%--------------------------------------------------------------------
+sum(Tuple, Acc) ->
+    case Tuple of
+        {struct, Pair} ->
+            {value, {<<"key">>, Key}} = lists:keysearch(<<"key">>, 1, Pair),
+            {value, {<<"value">>, Value}} = lists:keysearch(<<"value">>, 1, Pair),
+            case dict:find(Key, Acc) of
+                {ok, OldValue} -> dict:store(Key, OldValue + Value, Acc);
+                error -> dict:store(Key, Value, Acc)
+            end;
+        _Other -> error
     end.

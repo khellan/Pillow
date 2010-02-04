@@ -17,6 +17,27 @@
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
+%% EXPORTED FUNCTIONS
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
+%% Function: init/1
+%% Description: Nothing yet
+%% Returns: {ok, undefined}
+%%--------------------------------------------------------------------
+init([]) -> {ok, undefined}.
+
+%%--------------------------------------------------------------------
+%% Function: to_json/2
+%% Description: Returns json formatted reduction result for the request
+%% Returns: The result of the request
+%%--------------------------------------------------------------------
+to_json(ReqData, Context) ->
+    Results = mochijson2:encode(get_all_server_results(ReqData)),
+%    Results = get_all_server_results(ReqData),
+    {Results, ReqData, Context}.
+
+%%--------------------------------------------------------------------
 %% Function: content_types_provided/2
 %% Description: Defines a mapping of format to function provided by
 %%    this resource
@@ -26,11 +47,18 @@ content_types_provided(ReqData, Context) ->
     {[{"text/html", to_json}], ReqData, Context}.
     
 %%--------------------------------------------------------------------
-%% Function: init/1
-%% Description: Nothing yet
-%% Returns: {ok, undefined}
+%% Function: get_single_server_result/3
+%% Description: Retrieves the map reduce result from a single server
+%%    and sends the result back to Pid
+%% Returns: The result of sending the result back to Pid or raises
+%%    an erlang:error with Conneciton Failed on error
 %%--------------------------------------------------------------------
-init([]) -> {ok, undefined}.
+get_single_server_result(Server, ReqData, Pid) ->
+    TargetPath = make_target_path(Server, ReqData),
+    case ibrowse:send_req(TargetPath, [], get) of
+        {ok, _Code, _Headers, Body} -> Pid ! {self(), mochijson2:decode(Body)};
+        {error, conn_failed} -> erlang:error(["Connection Failed", TargetPath])
+    end.
 
 %%--------------------------------------------------------------------
 %% Function: update_view_map/0
@@ -45,6 +73,10 @@ update_view_map() ->
     [{attributes, PostAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, reducers:module_info()),
     [{vsn, [PostVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PostAttributes),
     {upgrade, PreVersion, PostVersion}.
+
+%%--------------------------------------------------------------------
+%% INTERNAL FUNCTIONS
+%%--------------------------------------------------------------------
 
 %%--------------------------------------------------------------------
 %% Function: reduce/2
@@ -87,20 +119,6 @@ make_query_string(Params) ->
 make_target_path(Server, ReqData) ->
     Path = io_lib:format("~s~s?~s", [Server, wrq:disp_path(ReqData), make_query_string(wrq:req_qs(ReqData))]),
     re:replace(re:replace(Path," ", "%20", [global]), "\"", "%22", [global, {return, list}]).
-
-%%--------------------------------------------------------------------
-%% Function: get_single_server_result/3
-%% Description: Retrieves the map reduce result from a single server
-%%    and sends the result back to Pid
-%% Returns: The result of sending the result back to Pid or raises
-%%    an erlang:error with Conneciton Failed on error
-%%--------------------------------------------------------------------
-get_single_server_result(Server, ReqData, Pid) ->
-    TargetPath = make_target_path(Server, ReqData),
-    case ibrowse:send_req(TargetPath, [], get) of
-        {ok, _Code, _Headers, Body} -> Pid ! {self(), mochijson2:decode(Body)};
-        {error, conn_failed} -> erlang:error(["Connection Failed", TargetPath])
-    end.
 
 %%--------------------------------------------------------------------
 %% Function: single_serer_result_retriever/2
@@ -172,14 +190,3 @@ get_all_server_results(ReqData) ->
     {Db, Design, View} = get_db_design_view(ReqData),
     reduce_result(Db, Design, View, get_all_responses(Servers)).
 %    io_lib:format("Db: ~s, Design: ~s, View: ~s", [Db, Design, View]).
-
-%%--------------------------------------------------------------------
-%% Function: to_json/2
-%% Description: Returns json formatted reduction result for the request
-%% Returns: The result of the request
-%%--------------------------------------------------------------------
-to_json(ReqData, Context) ->
-    Results = mochijson2:encode(get_all_server_results(ReqData)),
-%    Results = get_all_server_results(ReqData),
-    {Results, ReqData, Context}.
-

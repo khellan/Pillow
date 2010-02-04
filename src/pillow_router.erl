@@ -17,6 +17,27 @@
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
+%% EXPORTED FUNCTIONS
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
+%% Function: init/1
+%% Description: Nothing yet
+%% Returns: {ok, undefined}
+%%--------------------------------------------------------------------
+
+init([]) -> {ok, undefined}.
+
+%%--------------------------------------------------------------------
+%% Function: to_json/2
+%% Description: Returns the result of the request in json form
+%% Returns: The result of the request
+%%--------------------------------------------------------------------
+to_json(ReqData, Context) ->
+    Results = mochijson2:encode(get_all_server_results(ReqData)),
+    {Results, ReqData, Context}.
+
+%%--------------------------------------------------------------------
 %% Function: content_types_provided/2
 %% Description: Defines a mapping of format to function provided by
 %%    this resource
@@ -26,11 +47,8 @@ content_types_provided(ReqData, Context) ->
     {[{"text/html", to_json}], ReqData, Context}.
 
 %%--------------------------------------------------------------------
-%% Function: init/1
-%% Description: Nothing yet
-%% Returns: {ok, undefined}
+%% INTERNAL FUNCTIONS
 %%--------------------------------------------------------------------
-init([]) -> {ok, undefined}.
 
 %%--------------------------------------------------------------------
 %% Function: make_target_url/2
@@ -63,12 +81,3 @@ get_all_server_results(ReqData) ->
     PathElements = wrq:path_tokens(ReqData),
     {Db, Id} = {lists:nth(1, PathElements), lists:nth(2, PathElements)},
     get_single_server_result(pillow_routing_table:get(pillow_routing_table:hash(Db, Id), pillow_routing_table:init()), ReqData).
-
-%%--------------------------------------------------------------------
-%% Function: to_json/2
-%% Description: Returns the result of the request in json form
-%% Returns: The result of the request
-%%--------------------------------------------------------------------
-to_json(ReqData, Context) ->
-    Results = mochijson2:encode(get_all_server_results(ReqData)),
-    {Results, ReqData, Context}.
