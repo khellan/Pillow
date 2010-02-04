@@ -58,5 +58,4 @@ init([]) ->
 %% Returns: The dispatch map
 %%--------------------------------------------------------------------
 dispatch_map() ->
-    [{["doc", '*'], pillow_router, []},
-     {["view", '*'], pillow_reducer, []}].
+    [{['*'], pillow_couch, []}].

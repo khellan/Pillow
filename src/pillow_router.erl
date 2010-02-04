@@ -13,7 +13,7 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_router).
--export([init/1, to_json/2, content_types_provided/2]).
+-export([init/1, to_json/2, content_types_provided/2, allowed_methods/2, receive_data/2]).
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
@@ -34,7 +34,7 @@ init([]) -> {ok, undefined}.
 %% Returns: The result of the request
 %%--------------------------------------------------------------------
 to_json(ReqData, Context) ->
-    Results = mochijson2:encode(get_all_server_results(ReqData)),
+    Results = get_all_server_results(ReqData),
     {Results, ReqData, Context}.
 
 %%--------------------------------------------------------------------
@@ -44,7 +44,25 @@ to_json(ReqData, Context) ->
 %% Returns: the map
 %%--------------------------------------------------------------------
 content_types_provided(ReqData, Context) ->
-    {[{"text/html", to_json}], ReqData, Context}.
+    {[{"text/plain", to_json}], ReqData, Context}.
+
+%%--------------------------------------------------------------------
+%% Function: allowed_methods/2
+%% Description: Defines the allowed method for this resource
+%% Returns: {['GET', 'POST', 'PUT', 'DELETE'], ReqData, Context}
+%%--------------------------------------------------------------------
+allowed_methods(ReqData, Context) ->
+    {['GET', 'POST', 'PUT', 'DELETE'], ReqData, Context}.
+
+%%--------------------------------------------------------------------
+%% Function: receive_data/2
+%% Description: Returns the result of the request in json form
+%% Returns: The result of the request
+%%--------------------------------------------------------------------
+receive_data(ReqData, Context) ->
+    Results = get_all_server_results(ReqData),
+    ModReqData = wrq:append_to_response_body(Results, ReqData),
+    {Results, ModReqData, Context}.
 
 %%--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
@@ -65,11 +83,18 @@ make_target_url(Server, ReqData) ->
 %%--------------------------------------------------------------------
 get_single_server_result(Server, ReqData) ->
     Method = wrq:method(ReqData),
+    TargetUrl = make_target_url(Server, ReqData),
+    io:format("~s: ~s~n", [Method, TargetUrl]),
     {ok, _Code, _Headers, Body} = case Method of
-        'GET' -> ibrowse:send_req(make_target_url(Server, ReqData), [], get);
-        _ -> ibrowse:send_req(make_target_url(Server, ReqData), [], Method, wrq:req_body(ReqData))
+        'GET' ->
+            ibrowse:send_req(TargetUrl, [], get);
+        'PUT' ->
+            Payload = binary_to_list(wrq:req_body(ReqData)),
+            ibrowse:send_req(TargetUrl, [], put, Payload);
+        _ -> "Better wait"
     end,
-    mochijson2:decode(Body).
+    io:format("Body: ~s", [Body]),
+    Body.
 
 %%--------------------------------------------------------------------
 %% Function: get_all_server_results/1
@@ -81,3 +106,4 @@ get_all_server_results(ReqData) ->
     PathElements = wrq:path_tokens(ReqData),
     {Db, Id} = {lists:nth(1, PathElements), lists:nth(2, PathElements)},
     get_single_server_result(pillow_routing_table:get(pillow_routing_table:hash(Db, Id), pillow_routing_table:init()), ReqData).
+

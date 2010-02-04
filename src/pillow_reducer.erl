@@ -13,7 +13,7 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_reducer).
--export([init/1, to_json/2, content_types_provided/2, get_single_server_result/3, update_view_map/0]).
+-export([init/1, to_json/2, content_types_provided/2, allowed_methods/2, get_single_server_result/3, update_view_map/0]).
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
@@ -44,7 +44,15 @@ to_json(ReqData, Context) ->
 %% Returns: the map
 %%--------------------------------------------------------------------
 content_types_provided(ReqData, Context) ->
-    {[{"text/html", to_json}], ReqData, Context}.
+    {[{"application/json", to_json}], ReqData, Context}.
+
+%%--------------------------------------------------------------------
+%% Function: allowed_methods/2
+%% Description: Defines the allowed method for this resource
+%% Returns: {['GET'], ReqData, Context}
+%%--------------------------------------------------------------------
+allowed_methods(ReqData, Context) ->
+    {['GET'], ReqData, Context}.
 
 %%--------------------------------------------------------------------
 %% Function: get_single_server_result/3
