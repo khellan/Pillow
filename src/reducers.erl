@@ -29,15 +29,7 @@
 %%--------------------------------------------------------------------
 get_reducer(Db, Design, View) ->
     case {Db, Design, View} of
-        {"userprofiles", "reports", "clicked_recommendations_vendor_timestamps"} -> fun(T, A) -> sum(T,A) end;
-        {"userprofiles", "reports", "clicked_recommendations_vendor_totals"} -> fun(T, A) -> sum(T,A) end;
-        {"userprofiles", "reports", "purchase_count"} -> fun(T, A) -> sum(T,A) end;
-        {"userprofiles", "reports", "recommendations_vendor_timestamps"} -> fun(T, A) -> sum(T,A) end;
-        {"userprofiles", "reports", "recommendations_vendor_totals"} -> fun(T, A) -> sum(T,A) end;
-        {"userprofiles", "reports", "vendor_timestamps"} -> fun(T, A) -> sum(T,A) end;
-        {"userprofiles", "reports", "vendor_totals"} -> fun(T, A) -> sum(T,A) end;
-        {"userprofiles", "reports", "vendor_uniques"} -> fun(T, A) -> sum(T,A) end;
-        {"userprofiles", "filtering", "brand_totals"} -> fun(T, A) -> sum(T,A) end;
+        {"test", "test_design", "test_view"} -> fun(T, A) -> sum(T,A) end;
         _Other -> other
     end.
 
