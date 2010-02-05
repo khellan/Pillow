@@ -47,6 +47,12 @@ get_reducer(Db, Design, View) ->
 %% Function: sum/2
 %% Description: Adds the value for the Key in Tuple to the value for
 %%    that Key in Acc
+%%
+%% The equivalent of the javascript reducer
+%%    function(keys, values) {
+%%      return sum(values);
+%%    }
+%%
 %% Returns: The new version of Acc or error
 %%--------------------------------------------------------------------
 sum(Tuple, Acc) ->
