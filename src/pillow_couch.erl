@@ -13,7 +13,10 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_couch).
--export([init/1, to_json/2, content_types_provided/2, content_types_accepted/2, allowed_methods/2, receive_data/2, delete_resource/2, process_post/2]).
+
+-export([init/1, to_json/2, content_types_provided/2, content_types_accepted/2]).
+-export([allowed_methods/2, receive_data/2, delete_resource/2, process_post/2]).
+
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
@@ -25,7 +28,6 @@
 %% Description: Nothing yet
 %% Returns: {ok, undefined}
 %%--------------------------------------------------------------------
-
 init([]) -> {ok, undefined}.
 
 %%--------------------------------------------------------------------
@@ -67,6 +69,11 @@ delete_resource(ReqData, Context) ->
         _ -> pillow_router:delete_resource(ReqData, Context)
     end.
 
+%%--------------------------------------------------------------------
+%% Function: process_post/2
+%% Description: Receives and forwards post data
+%% Returns: The result of the request
+%%--------------------------------------------------------------------
 process_post(ReqData, Context) ->
     io:format("~s: ~s~n", [wrq:method(ReqData), wrq:raw_path(ReqData)]),
     PathTokens = wrq:path_tokens(ReqData),
@@ -76,7 +83,7 @@ process_post(ReqData, Context) ->
             lists:nth(2, PathTokens)
     end,
     case Id of
-        ok -> pillow_router:receive_data(ReqData, Context);
+        ok -> pillow_router:process_post(ReqData, Context);
         "_design" -> error;
         _ -> error
     end.

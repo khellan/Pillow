@@ -13,7 +13,10 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_router).
--export([init/1, to_json/2, content_types_provided/2, allowed_methods/2, receive_data/2, delete_resource/2]).
+
+-export([init/1, to_json/2, content_types_provided/2, allowed_methods/2]).
+-export([receive_data/2, delete_resource/2, process_post/2]).
+
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
@@ -25,7 +28,6 @@
 %% Description: Nothing yet
 %% Returns: {ok, undefined}
 %%--------------------------------------------------------------------
-
 init([]) -> {ok, undefined}.
 
 %%--------------------------------------------------------------------
@@ -62,7 +64,17 @@ allowed_methods(ReqData, Context) ->
 receive_data(ReqData, Context) ->
     Results = get_all_server_results(ReqData),
     ModReqData = wrq:append_to_response_body(Results, ReqData),
-    {Results, ModReqData, Context}.
+    {true, ModReqData, Context}.
+
+%%--------------------------------------------------------------------
+%% Function: process_post/2
+%% Description: Returns the result of the request in json form
+%% Returns: The result of the request
+%%--------------------------------------------------------------------
+process_post(ReqData, Context) ->
+    Results = post_to_server(ReqData),
+    ModReqData = wrq:append_to_response_body(Results, ReqData),
+    {true, ModReqData, Context}.
 
 %%%--------------------------------------------------------------------
 %% Function: delete_resource/2
@@ -108,6 +120,43 @@ get_single_server_result(Server, ReqData) ->
             ibrowse:send_req(TargetUrl, [], delete);
         _ -> "Not Supported"
     end,
+    io:format("Body: ~s", [Body]),
+    Body.
+
+%%--------------------------------------------------------------------
+%% Function: get_non_existing_id/1
+%% Description: Finds a new uuid to use as id ensuring that no
+%%    document with that id exists
+%% Returns: {Server, Db, Id} with Server being the Server that should
+%%    store the document and Id is the new Id
+%%--------------------------------------------------------------------
+get_non_existing_id(Db) ->
+    Id = pillow_util:uuid(),
+    Server = pillow_routing_table:get_server(Db, Id),
+    TargetUrl = lists:flatten([Server, Db, "/", Id]),
+    {ok, Code, _Headers, _Body} = ibrowse:send_req(TargetUrl, [], get),
+    case Code of
+        "404" -> {Server, Db, Id};
+        _ -> get_non_existing_id(Db)
+    end.
+
+%%--------------------------------------------------------------------
+%% Function: post_to_server/1
+%% Description: Changes a potentially id-less post into a put with id
+%% Returns: The result retrieved from the server
+%%--------------------------------------------------------------------
+post_to_server(ReqData) ->
+    PathElements = wrq:path_tokens(ReqData),
+    {Server, Db, Id} = case length(PathElements) of
+        1 -> get_non_existing_id(lists:nth(1, PathElements));
+        _ ->
+            {MyDb, MyId} = {lists:nth(1, PathElements), lists:nth(2, PathElements)},
+            {pillow_routing_table:get_server(MyDb, MyId), MyDb, MyId}
+    end,
+    TargetUrl = lists:flatten([Server, Db, "/", Id]),
+    io:format("~s: ~s~n", [wrq:method(ReqData), TargetUrl]),
+    Payload = binary_to_list(wrq:req_body(ReqData)),
+    {ok, _Code, _Headers, Body} = ibrowse:send_req(TargetUrl, [], put, Payload),
     io:format("Body: ~s", [Body]),
     Body.
 

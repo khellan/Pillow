@@ -22,6 +22,7 @@
              pillow_routing_table,
              pillow_router,
              pillow_reducer,
+             pillow_util,
              reducers]},
   {registered, []},
   {applications, [kernel, stdlib, crypto]},
