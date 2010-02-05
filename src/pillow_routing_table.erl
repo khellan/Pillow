@@ -13,8 +13,8 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_routing_table).
--export([init/0, hash/2, to_list/1, get/2]).
--vsn(0.1).
+-export([init/0, hash/2, to_list/1, get_server/2]).
+-vsn(0.2).
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS
@@ -50,16 +50,24 @@ to_list(Dict) ->
     dict:to_list(Dict).
 
 %%--------------------------------------------------------------------
+%% Function: get_server/2
+%% Description: Retrieves the right server for the Db, Id pair
+%% Returns: A server url
+%%--------------------------------------------------------------------
+get_server(Db, Id) ->
+    get(hash(Db, Id), pillow_routing_table:init()).
+
+%%--------------------------------------------------------------------
+%% INTERNAL FUNCTIONS
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
 %% Function: get/2
 %% Description: Retrieves the requested Value from Dict
 %% Returns: The Value of Key in Dict
 %%--------------------------------------------------------------------
 get(Key, Dict) ->
     dict:fetch(Key, Dict).
-    
-%%--------------------------------------------------------------------
-%% INTERNAL FUNCTIONS
-%%--------------------------------------------------------------------
 
 %%--------------------------------------------------------------------
 %% Function: fill_routing_table/1
