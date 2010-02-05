@@ -13,8 +13,8 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_util).
+
 -export([uuid/0]).
--include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS
@@ -51,4 +51,3 @@ to_hex([H|T]) -> [to_digit(H div 16), to_digit(H rem 16) | to_hex(T)].
 %%--------------------------------------------------------------------
 to_digit(N) when N < 10 -> $0 + N;
 to_digit(N) -> $a + N-10.
-
