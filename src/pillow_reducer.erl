@@ -13,7 +13,9 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_reducer).
+
 -export([init/1, to_json/2, content_types_provided/2, allowed_methods/2, get_single_server_result/3, update_view_map/0]).
+
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
@@ -34,7 +36,6 @@ init([]) -> {ok, undefined}.
 %%--------------------------------------------------------------------
 to_json(ReqData, Context) ->
     Results = mochijson2:encode(get_all_server_results(ReqData)),
-%    Results = get_all_server_results(ReqData),
     {Results, ReqData, Context}.
 
 %%--------------------------------------------------------------------
@@ -164,8 +165,6 @@ extract_rows([Head | Tail]) ->
 %%--------------------------------------------------------------------
 reduce_result(Db, Design, View, RawResult) ->
     {struct, [{<<"rows">>, (do_reduce(Db, Design, View))(lists:flatten(extract_rows(RawResult)))}]}.
-%    [Head | Tail] = RawResult,
-%    Head.
 
 %%--------------------------------------------------------------------
 %% Function: get_db_design_view/1
@@ -186,4 +185,3 @@ get_all_server_results(ReqData) ->
     Servers = lists:map(fun({_, Server}) -> single_server_result_retriever(Server, ReqData) end, pillow_routing_table:to_list(pillow_routing_table:init())),
     {Db, Design, View} = get_db_design_view(ReqData),
     reduce_result(Db, Design, View, get_all_responses(Servers)).
-%    io_lib:format("Db: ~s, Design: ~s, View: ~s", [Db, Design, View]).

@@ -173,4 +173,3 @@ get_all_server_results(ReqData) ->
         _ -> {lists:nth(1, PathElements), lists:nth(2, PathElements)}
     end,
     get_single_server_result(pillow_routing_table:get(pillow_routing_table:hash(Db, Id), pillow_routing_table:init()), ReqData).
-
