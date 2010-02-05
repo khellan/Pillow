@@ -13,7 +13,7 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_couch).
--export([init/1, to_json/2, content_types_provided/2, content_types_accepted/2, allowed_methods/2, receive_data/2, delete_resource/2]).
+-export([init/1, to_json/2, content_types_provided/2, content_types_accepted/2, allowed_methods/2, receive_data/2, delete_resource/2, process_post/2]).
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
@@ -65,6 +65,20 @@ delete_resource(ReqData, Context) ->
     case Id of
         "_design" -> error;
         _ -> pillow_router:delete_resource(ReqData, Context)
+    end.
+
+process_post(ReqData, Context) ->
+    io:format("~s: ~s~n", [wrq:method(ReqData), wrq:raw_path(ReqData)]),
+    PathTokens = wrq:path_tokens(ReqData),
+    Id = case length(PathTokens) of
+        1 -> ok;
+        _ ->
+            lists:nth(2, PathTokens)
+    end,
+    case Id of
+        ok -> pillow_router:receive_data(ReqData, Context);
+        "_design" -> error;
+        _ -> error
     end.
 
 %%--------------------------------------------------------------------
