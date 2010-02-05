@@ -111,21 +111,12 @@ do_reduce(Db, Design, View) ->
     end.
 
 %%--------------------------------------------------------------------
-%% Function: make_query_string/1
-%% Description: Combines the query string key, value pairs into a
-%%    query string
-%% Returns: The query string
-%%--------------------------------------------------------------------
-make_query_string(Params) ->
-    lists:map(fun({Key, Value}) -> io_lib:format("~s=~s", [Key, Value]) end, Params).
-
-%%--------------------------------------------------------------------
 %% Function: make_target_path/2
 %% Description: Creates the correct url to the a single server.
 %% Returns: The server url
 %%--------------------------------------------------------------------
 make_target_path(Server, ReqData) ->
-    Path = io_lib:format("~s~s?~s", [Server, wrq:disp_path(ReqData), make_query_string(wrq:req_qs(ReqData))]),
+    Path = io_lib:format("~s~s", [Server, wrq:raw_path(ReqData)]),
     re:replace(re:replace(Path," ", "%20", [global]), "\"", "%22", [global, {return, list}]).
 
 %%--------------------------------------------------------------------
