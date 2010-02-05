@@ -13,7 +13,7 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_couch).
--export([init/1, to_json/2, content_types_provided/2, content_types_accepted/2, allowed_methods/2, receive_data/2]).
+-export([init/1, to_json/2, content_types_provided/2, content_types_accepted/2, allowed_methods/2, receive_data/2, delete_resource/2]).
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
@@ -34,6 +34,7 @@ init([]) -> {ok, undefined}.
 %% Returns: The result of the request
 %%--------------------------------------------------------------------
 to_json(ReqData, Context) ->
+    io:format("~s: ~s~n", [wrq:method(ReqData), wrq:raw_path(ReqData)]),
     Id = lists:nth(2, wrq:path_tokens(ReqData)),
     case Id of
         "_design" -> pillow_reducer:to_json(ReqData, Context);
@@ -46,10 +47,24 @@ to_json(ReqData, Context) ->
 %% Returns: The result of the request
 %%--------------------------------------------------------------------
 receive_data(ReqData, Context) ->
+    io:format("~s: ~s~n", [wrq:method(ReqData), wrq:raw_path(ReqData)]),
     Id = lists:nth(2, wrq:path_tokens(ReqData)),
     case Id of
         "_design" -> error;
         _ -> pillow_router:receive_data(ReqData, Context)
+    end.
+
+%%--------------------------------------------------------------------
+%% Function: delete_resource/2
+%% Description: Forwards the request
+%% Returns: The result of the request
+%%--------------------------------------------------------------------
+delete_resource(ReqData, Context) ->
+    io:format("~s: ~s~n", [wrq:method(ReqData), wrq:raw_path(ReqData)]),
+    Id = lists:nth(2, wrq:path_tokens(ReqData)),
+    case Id of
+        "_design" -> error;
+        _ -> pillow_router:delete_resource(ReqData, Context)
     end.
 
 %%--------------------------------------------------------------------

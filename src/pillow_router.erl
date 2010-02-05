@@ -13,7 +13,7 @@
 %%%---------------------------------------------------------------------
 
 -module(pillow_router).
--export([init/1, to_json/2, content_types_provided/2, allowed_methods/2, receive_data/2]).
+-export([init/1, to_json/2, content_types_provided/2, allowed_methods/2, receive_data/2, delete_resource/2]).
 -include_lib("deps/webmachine/include/webmachine.hrl").
 
 %%--------------------------------------------------------------------
@@ -64,7 +64,17 @@ receive_data(ReqData, Context) ->
     ModReqData = wrq:append_to_response_body(Results, ReqData),
     {Results, ModReqData, Context}.
 
+%%%--------------------------------------------------------------------
+%% Function: delete_resource/2
+%% Description: Returns the result of the delete
+%% Returns: The result of the request
 %%--------------------------------------------------------------------
+delete_resource(ReqData, Context) ->
+    Results = get_all_server_results(ReqData),
+    ModReqData = wrq:append_to_response_body(Results, ReqData),
+    {true, ModReqData, Context}.
+
+%--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
 %%--------------------------------------------------------------------
 
@@ -74,7 +84,7 @@ receive_data(ReqData, Context) ->
 %% Returns: TargetUrl
 %%--------------------------------------------------------------------
 make_target_url(Server, ReqData) ->
-    lists:flatten([Server, wrq:disp_path(ReqData)]).
+    lists:flatten([Server, wrq:raw_path(ReqData)]).
 
 %%--------------------------------------------------------------------
 %% Function: get_single_server_result/2
@@ -91,7 +101,9 @@ get_single_server_result(Server, ReqData) ->
         'PUT' ->
             Payload = binary_to_list(wrq:req_body(ReqData)),
             ibrowse:send_req(TargetUrl, [], put, Payload);
-        _ -> "Better wait"
+        'DELETE' ->
+            ibrowse:send_req(TargetUrl, [], delete);
+        _ -> "Not Supported"
     end,
     io:format("Body: ~s", [Body]),
     Body.
