@@ -101,6 +101,9 @@ get_single_server_result(Server, ReqData) ->
         'PUT' ->
             Payload = binary_to_list(wrq:req_body(ReqData)),
             ibrowse:send_req(TargetUrl, [], put, Payload);
+        'POST' ->
+            Payload = binary_to_list(wrq:req_body(ReqData)),
+            ibrowse:send_req(TargetUrl, [], post, Payload);
         'DELETE' ->
             ibrowse:send_req(TargetUrl, [], delete);
         _ -> "Not Supported"
