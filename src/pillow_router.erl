@@ -172,4 +172,4 @@ get_all_server_results(ReqData) ->
         1 -> {lists:nth(1, PathElements), ""};
         _ -> {lists:nth(1, PathElements), lists:nth(2, PathElements)}
     end,
-    get_single_server_result(pillow_routing_table:get(pillow_routing_table:hash(Db, Id), pillow_routing_table:init()), ReqData).
+    get_single_server_result(pillow_routing_table:get_server(Db, Id), ReqData).
