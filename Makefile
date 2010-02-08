@@ -1,8 +1,9 @@
 ERL          ?= erl
 EBIN_DIRS    := $(wildcard deps/*/ebin)
 APP          := pillow
+APP2          := pillow_routing_table
 
-all: ebin erl ebin/$(APP).app
+all: ebin erl ebin/$(APP).app ebin/$(APP2).app
 all_boot: all make_boot
 
 erl:
@@ -11,6 +12,7 @@ erl:
 
 docs:
 	@erl -noshell -run edoc_run application '$(APP)' '"."' '[]'
+	@erl -noshell -run edoc_run application '$(APP2)' '"."' '[]'
 
 clean: 
 	@echo "removing:"
@@ -25,3 +27,6 @@ ebin:
 
 ebin/$(APP).app: src/$(APP).app
 	@cp -v src/$(APP).app $@
+
+ebin/$(APP2).app: src/$(APP2).app
+	@cp -v src/$(APP2).app $@

@@ -26,6 +26,7 @@
 %% Returns: ok if everything starts successfully
 %%--------------------------------------------------------------------
 start() ->
+    pillow_routing_table:start_link(),
     application:start(ibrowse),
     ensure_started(crypto),
     ensure_started(webmachine),
@@ -41,6 +42,7 @@ stop() ->
     application:stop(webmachine),
     application:stop(crypto),
     application:stop(ibrowse),
+    pillow_routing_table:stop(),
     Res.
 
 %%--------------------------------------------------------------------
@@ -49,14 +51,8 @@ stop() ->
 %% Returns: {upgrade, PreVersion, PostVersion}
 %%--------------------------------------------------------------------
 update_routing_table() ->
-    [{attributes, PreAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, pillow_routing_table:module_info()),
-    [{vsn, [PreVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PreAttributes),
-    code:purge(pillow_routing_table),
-    code:load_file(pillow_routing_table),
-    [{attributes, PostAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, pillow_routing_table:module_info()),
-    [{vsn, [PostVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PostAttributes),
-    {upgrade, PreVersion, PostVersion}.
-
+    pillow_routing_table:update_routing_table().
+    
 %%--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
 %%--------------------------------------------------------------------

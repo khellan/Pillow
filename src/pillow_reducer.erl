@@ -182,6 +182,6 @@ get_db_design_view(ReqData) ->
 %% Returns: The reduced result
 %%--------------------------------------------------------------------
 get_all_server_results(ReqData) ->
-    Servers = lists:map(fun({_, Server}) -> single_server_result_retriever(Server, ReqData) end, pillow_routing_table:to_list(pillow_routing_table:init())),
+    Servers = lists:map(fun({_, Server}) -> single_server_result_retriever(Server, ReqData) end, pillow_routing_table:to_list()),
     {Db, Design, View} = get_db_design_view(ReqData),
     reduce_result(Db, Design, View, get_all_responses(Servers)).
