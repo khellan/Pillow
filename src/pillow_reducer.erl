@@ -140,7 +140,7 @@ get_all_responses(Servers) ->
         {Pid, Response} ->
             NewServers = lists:delete(Pid, Servers),
             lists:flatten([Response, get_all_responses(NewServers)])
-        after 5000 -> []
+        after 250 -> []
     end.
 
 %%--------------------------------------------------------------------
