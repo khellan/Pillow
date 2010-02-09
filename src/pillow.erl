@@ -14,7 +14,7 @@
 
 -module(pillow).
 
--export([start/0, stop/0, update_routing_table/0]).
+-export([start/0, stop/0, update_routing_table/0, update_view_map/0]).
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS
@@ -53,6 +53,20 @@ stop() ->
 update_routing_table() ->
     pillow_routing_table:update_routing_table().
     
+%%--------------------------------------------------------------------
+%% Function: update_view_map/0
+%% Description: Reloads the view map
+%% Returns: {upgrade, PreVersion, PostVersion}
+%%--------------------------------------------------------------------
+update_view_map() ->
+    [{attributes, PreAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, reducers:module_info()),
+    [{vsn, [PreVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PreAttributes),
+    code:purge(reducers),
+    code:load_file(reducers),
+    [{attributes, PostAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, reducers:module_info()),
+    [{vsn, [PostVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PostAttributes),
+    {upgrade, PreVersion, PostVersion}.
+
 %%--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
 %%--------------------------------------------------------------------
