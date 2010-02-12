@@ -1,5 +1,14 @@
 Pillow is a combined router and rereducer for CouchDB.
 
-Dependencies:
+Dependencies (Both of these are included in this git repository):
 - webmachine
 - ibrowse from jungerl
+
+Needless to say, it also depends indirectly on couchdb. There is no direct dependencies, but what use is a router
+or rereducer for CouchDB without CouchDB. 
+
+Roadmap:
+The current goal is to add resharding to Pillow. 
+1. Automatic generation of resharding filters
+2. Automatic resharding using filters
+
