@@ -9,6 +9,15 @@ or rereducer for CouchDB without CouchDB.
 
 Roadmap:
 The current goal is to add resharding to Pillow. 
-1. Automatic generation of resharding filters
-2. Automatic resharding using filters
+1. Automatic generation of resharding validate functions *Done*
+2. Automatic resharding using validate functions *Done*
+3. CouchDB style config files
+4. Resharding controlled through config files (original, resharding, final)
+   The original config file defines how routing will be done, the resharding
+   one controls how resharding will be done meaning it has both the before
+   and after configs and the after config will not be used actively at this step.
+   When the final config file which is of the same format as the original is
+   enabled, the new sharding setup is used and the old servers may be torn
+   down.
+5. End-to-end resharding through a single call
 
