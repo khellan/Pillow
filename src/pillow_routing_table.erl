@@ -20,12 +20,12 @@
 -export([handle_call/3, handle_cast/2, handle_info/2, code_change/3]).
 
 % Functions for general use
--export([update_routing_table/0, to_list/0, get_server/2]).
+-export([update_routing_table/0, to_list/0, get_server/2, reshard/1]).
 
 % Artificial export for upgrading
 -export([fill_routing_table/0]).
 
--vsn(0.3).
+-vsn(0.4).
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS
@@ -37,6 +37,7 @@
 %% Returns: {ok, Pid}
 %%--------------------------------------------------------------------
 start_link() ->
+    application:start(ibrowse),
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 
@@ -47,7 +48,9 @@ start_link() ->
 %% Returns: {ok, Pid}
 %%--------------------------------------------------------------------
 start() ->
-    gen_server:start({local, ?MODULE}, ?MODULE, [], [{debug, []}]).
+    Result = gen_server:start({local, ?MODULE}, ?MODULE, [], [{debug, []}]),
+    application:stop(ibrowse),
+    Result.
 
 %%--------------------------------------------------------------------
 %% Function: stop/0
@@ -99,14 +102,22 @@ update_routing_table() ->
     gen_server:call(?MODULE, update_routing_table).
 
 %%--------------------------------------------------------------------
+%% Function: reshard/1
+%% Description: Currently sets up validation filters for resharding the Db
+%% Returns: The new dict
+%%--------------------------------------------------------------------
+reshard(Db) ->
+    gen_server:call(?MODULE, {reshard, Db}).
+
+%%--------------------------------------------------------------------
 %% Function: fill_routing_table/1
 %% Description: Creates and fills the routing table
 %% Returns: The new dict
 %%--------------------------------------------------------------------
 fill_routing_table() ->
-    Dict1 = dict:store(1, "http://localhost:5985/", dict:new()),
-    Dict2 = dict:store(2, "http://localhost:5986/", Dict1),
-    dict:store(3, "http://localhost:5987/", Dict2).
+%    Dict1 = dict:store(1, "http://localhost:5988/", dict:new()),
+%    dict:store(2, "http://localhost:5989/", Dict1).
+    dict:store(1, "http://localhost:5984/", dict:new()).
 
 %%--------------------------------------------------------------------
 %% Function: handle_call/3
@@ -119,7 +130,9 @@ handle_call(to_list, _From, RoutingTable) ->
     {reply, dict:to_list(RoutingTable), RoutingTable};
 handle_call(update_routing_table, _From, _OldRoutingTable) ->
     {upgrade, PreVersion, PostVersion} = reload_routing_table(),
-    {reply, {upgrade, PreVersion, PostVersion}, ?MODULE:fill_routing_table()}.
+    {reply, {upgrade, PreVersion, PostVersion}, ?MODULE:fill_routing_table()};
+handle_call({reshard, Db}, _From, RoutingTable) ->
+    {reply, execute_reshard(Db, RoutingTable), RoutingTable}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast/2
@@ -157,12 +170,145 @@ code_change(_OldVsn, _RoutingTable, _Extra) ->
 %% Returns: The new Dict
 %%--------------------------------------------------------------------
 hash(Db, Id) ->
-    Hash = lists:sum(Id) rem 3 + 1,
+    Hash = lists:sum(Id) rem 1 + 1,
     case Db of
         "userprofiles" -> Hash;
         _Other -> 1
     end.
 
+%%--------------------------------------------------------------------
+%% Function: fill_new_routing_table/1
+%% Description: Creates and fills the replacement routing table db specific
+%% Returns: The new dict
+%%--------------------------------------------------------------------
+fill_new_routing_table(Db) ->
+    Dict1 = dict:store(1, "http://localhost:5988/" ++ Db ++ "/", dict:new()),
+    dict:store(2, "http://localhost:5989/" ++ Db ++ "/", Dict1).
+
+%%--------------------------------------------------------------------
+%% Function: get_shard_validator/2
+%% Description: Creates a javascript shard validator for the given shard number
+%% Returns: The new validator in a string
+%%--------------------------------------------------------------------
+get_shard_validator(Shard, NumShards) ->
+    "function(doc, oldDoc, userCtx) {"
+    ++ "  var myShardNumber = "
+    ++ "  " ++ integer_to_list(Shard) ++ ";"
+    ++ "  var shard = 0;"
+    ++ "  for (var i = 0; i < doc._id.length; ++i) {"
+    ++ "    shard += doc._id.charCodeAt(i);"
+    ++ "  }"
+    ++ "  shard = (shard % " ++ integer_to_list(NumShards) ++ ") + 1;"
+    ++ "  if (shard != myShardNumber) throw({forbidden: 'wrong hash'});"
+    ++ "}".
+
+%%--------------------------------------------------------------------
+%% Function: store_validator/2
+%% Description: Stores Validator in Url
+%% Returns: ibrowse response
+%%--------------------------------------------------------------------
+store_validator(Validator, Url) ->
+    DesignDoc = mochijson2:encode(
+        {struct, [
+            {<<"_id">>, <<"_design/shard">>},
+            {<<"validate_doc_update">>, list_to_binary(Validator)}
+        ]}),
+    io:format("~s: ~s~n", [Url, DesignDoc]),
+    ibrowse:send_req(Url, [], post, DesignDoc).
+%    {ok, "201", "Headers", "Response"}.
+
+
+%%--------------------------------------------------------------------
+%% Function: create_shard_validator/2
+%% Description: creates sharding validators for the given shard and the rest of the Dict
+%% Returns: ok or error
+%%--------------------------------------------------------------------
+create_shard_validator(Shard, Dict) ->
+    NumShards = dict:size(Dict),
+    Validator = get_shard_validator(Shard, NumShards),
+    Result = case dict:find(Shard, Dict) of
+        {ok, Url} -> store_validator(Validator, Url);
+        _ -> error
+    end,
+    case Result of
+        {ok, "201", _Headers, _Response} ->
+            case NumShards of
+                Shard -> ok;
+                _ -> create_shard_validator(Shard + 1, Dict)
+            end;
+        _ -> error
+    end.
+
+%%--------------------------------------------------------------------
+%% Function: create_shard_validators/1
+%% Description: creates sharding validators for all servers in Dict
+%% Returns: ok or error
+%%--------------------------------------------------------------------
+create_shard_validators(Dict) ->
+    create_shard_validator(1, Dict).
+
+%%--------------------------------------------------------------------
+%% Function: init_replication/2
+%% Description: Sets up a continuous pull replication
+%% Returns: The ibrowse response
+%%--------------------------------------------------------------------
+init_replication(Source, Target) ->
+    Url = Source ++ "_replicate",
+    Db = lists:sublist(string:tokens(Target, "/"), 3, 1),
+    Message = mochijson2:encode(
+        {struct, [
+            {<<"source">>, list_to_binary(Db)},
+            {<<"target">>, list_to_binary(Target)},
+            {<<"continuous">>, true}
+        ]}
+    ),
+    io:format("~s: ~s~n", [Url, Message]),
+    ibrowse:send_req(Url, [], post, Message).
+%    {ok, "202", "Headers", "Response"}.
+
+%%--------------------------------------------------------------------
+%% Function: init_all_replication/4
+%% Description: Sets up a continuous push replication for all shards
+%% Returns: ok or error depending on result
+%%--------------------------------------------------------------------
+init_all_replication(SourceShard, TargetShard, SourceDict, TargetDict) ->
+    CurrentResult = case dict:find(SourceShard, SourceDict) of
+        {ok, SourceUrl} ->
+            case dict:find(TargetShard, TargetDict) of
+                {ok, TargetUrl} -> init_replication(SourceUrl, TargetUrl);
+                _ ->
+                    io:format("Tried to find ~i of ~i target shards", [TargetShard, dict:size(TargetDict)]),
+                    error
+            end;
+        _ ->
+            io:format("Tried to find ~i of ~i source shards", [SourceShard, dict:size(SourceDict)]),
+            error
+    end,
+    NextResult = case CurrentResult of
+        {ok, "202", _Headers1, _Response1} ->
+            case dict:size(TargetDict) of
+                TargetShard -> ok;
+                _ -> init_all_replication(SourceShard, TargetShard + 1, SourceDict, TargetDict)
+            end
+    end,
+    case NextResult of
+        ok ->
+            case dict:size(SourceDict) of
+                SourceShard -> ok;
+                _ -> init_all_replication(SourceShard + 1, TargetShard, SourceDict, TargetDict)
+            end
+    end.
+
+%%--------------------------------------------------------------------
+%% Function: execute_reshard/2
+%% Description: Currently sets up validation filters for resharding the Db
+%% Returns: ok or error depending on result
+%%--------------------------------------------------------------------
+execute_reshard(Db, RoutingTable) ->
+    TargetDict = fill_new_routing_table(Db),
+    create_shard_validators(TargetDict),
+    init_all_replication(1, 1, RoutingTable, TargetDict).
+    
 %%--------------------------------------------------------------------
 %% Function: get/2
 %% Description: Retrieves the requested Value from Dict
