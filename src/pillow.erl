@@ -26,8 +26,8 @@
 %% Returns: ok if everything starts successfully
 %%--------------------------------------------------------------------
 start() ->
-    pillow_routing_table:start_link(),
     application:start(ibrowse),
+    application:start(couch_config),
     ensure_started(crypto),
     ensure_started(webmachine),
     application:start(pillow).
@@ -39,10 +39,11 @@ start() ->
 %%--------------------------------------------------------------------
 stop() ->
     Res = application:stop(pillow),
+    pillow_routing_table:stop(),
     application:stop(webmachine),
     application:stop(crypto),
+    application:stop(couch_config),
     application:stop(ibrowse),
-    pillow_routing_table:stop(),
     Res.
 
 %%--------------------------------------------------------------------

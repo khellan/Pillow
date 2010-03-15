@@ -16,14 +16,11 @@
 -behaviour(gen_server).
 
 % gen_server functions
--export([init/1, start_link/0, start/0, stop/0, terminate/2]).
+-export([init/1, start_link/0, stop/0, terminate/2]).
 -export([handle_call/3, handle_cast/2, handle_info/2, code_change/3]).
 
 % Functions for general use
--export([update_routing_table/0, to_list/0, get_server/2, reshard/1]).
-
-% Artificial export for upgrading
--export([fill_routing_table/0]).
+-export([update_routing_table/0, get_server/1, reshard/0, flip/0]).
 
 -vsn(0.4).
 
@@ -37,20 +34,7 @@
 %% Returns: {ok, Pid}
 %%--------------------------------------------------------------------
 start_link() ->
-    application:start(ibrowse),
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
-
-
-%%--------------------------------------------------------------------
-%% Function: start/0
-%% Description: Starts the routing table process. Use when testing
-%% from the shell
-%% Returns: {ok, Pid}
-%%--------------------------------------------------------------------
-start() ->
-    Result = gen_server:start({local, ?MODULE}, ?MODULE, [], [{debug, []}]),
-    application:stop(ibrowse),
-    Result.
 
 %%--------------------------------------------------------------------
 %% Function: stop/0
@@ -75,23 +59,15 @@ terminate(_Reason, _RoutingTable) ->
 %% Returns: {ok, RoutingTable}
 %%--------------------------------------------------------------------
 init(_) ->
-    {ok, fill_routing_table()}.
+    set_routing_table(couch_config:get("routing", "routing_table")).
 
 %%--------------------------------------------------------------------
-%% Function: to_list/0
-%% Description: Creates a list of the values in Dict
-%% Returns: A list with values from Dict
-%%--------------------------------------------------------------------
-to_list() ->
-    gen_server:call(?MODULE, to_list).
-
-%%--------------------------------------------------------------------
-%% Function: get_server/2
+%% Function: get_server/1
 %% Description: Retrieves the right server for the Db, Id pair
 %% Returns: A server url
 %%--------------------------------------------------------------------
-get_server(Db, Id) ->
-    gen_server:call(?MODULE, {get_server, Db, Id}).
+get_server(Id) ->
+    gen_server:call(?MODULE, {get_server, Id}).
 
 %%--------------------------------------------------------------------
 %% Function: update_routing_table/0
@@ -102,37 +78,40 @@ update_routing_table() ->
     gen_server:call(?MODULE, update_routing_table).
 
 %%--------------------------------------------------------------------
-%% Function: reshard/1
-%% Description: Currently sets up validation filters for resharding the Db
+%% Function: reshard/0
+%% Description: Currently sets up validation filters for resharding the databases
 %% Returns: The new dict
 %%--------------------------------------------------------------------
-reshard(Db) ->
-    gen_server:call(?MODULE, {reshard, Db}).
+reshard() ->
+    gen_server:call(?MODULE, reshard).
 
 %%--------------------------------------------------------------------
-%% Function: fill_routing_table/1
-%% Description: Creates and fills the routing table
-%% Returns: The new dict
+%% Function: flip/0
+%% Description: Flips from using old routing table to the new one. Also updates
+%%     the config file
+%% Returns: ok
 %%--------------------------------------------------------------------
-fill_routing_table() ->
-%    Dict1 = dict:store(1, "http://localhost:5988/", dict:new()),
-%    dict:store(2, "http://localhost:5989/", Dict1).
-    dict:store(1, "http://localhost:5984/", dict:new()).
-
+flip() ->
+    gen_server:call(?MODULE, flip).
+    
 %%--------------------------------------------------------------------
 %% Function: handle_call/3
 %% Description: Handler for gen_server:call
 %% Returns: {reply, Message, RoutingTable}
 %%--------------------------------------------------------------------
-handle_call({get_server, Db, Id}, _From, RoutingTable) ->    
-    {reply, get(hash(Db, Id), RoutingTable), RoutingTable};
-handle_call(to_list, _From, RoutingTable) ->
-    {reply, dict:to_list(RoutingTable), RoutingTable};
+handle_call({get_server, Id}, _From, RoutingTable) ->    
+    {reply, get_routing(Id, RoutingTable), RoutingTable};
 handle_call(update_routing_table, _From, _OldRoutingTable) ->
     {upgrade, PreVersion, PostVersion} = reload_routing_table(),
-    {reply, {upgrade, PreVersion, PostVersion}, ?MODULE:fill_routing_table()};
-handle_call({reshard, Db}, _From, RoutingTable) ->
-    {reply, execute_reshard(Db, RoutingTable), RoutingTable}.
+    {reply, {upgrade, PreVersion, PostVersion}, set_routing_table(couch_config:get("routing", "routing_table"))};
+handle_call(reshard, _From, RoutingTable) ->
+    {reply, execute_reshard(RoutingTable), RoutingTable};
+handle_call(flip, _From, RoutingTable) ->
+    {ok, NewRoutingTable} = execute_flip(RoutingTable),
+    {reply, ok, NewRoutingTable};    
+handle_call({set_routing_table, NewRoutingTable}, _From, _RoutingTable) ->
+    {ok, RoutingTable} = set_routing_table(NewRoutingTable),
+    {reply, ok, RoutingTable}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast/2
@@ -157,33 +136,11 @@ handle_info(Info, RoutingTable) ->
 %% Returns: {ok, RoutingTable}
 %%--------------------------------------------------------------------
 code_change(_OldVsn, _RoutingTable, _Extra) ->
-    {ok, fill_routing_table()}.
+    {ok, set_routing_table(couch_config:get("routing", "routing_table"))}.
 
 %%--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
 %%--------------------------------------------------------------------
-
-%%--------------------------------------------------------------------
-%% Function: hash/2
-%% Description: Returns the index into the routing table for the given
-%%     Db, Id pair
-%% Returns: The new Dict
-%%--------------------------------------------------------------------
-hash(Db, Id) ->
-    Hash = lists:sum(Id) rem 1 + 1,
-    case Db of
-        "userprofiles" -> Hash;
-        _Other -> 1
-    end.
-
-%%--------------------------------------------------------------------
-%% Function: fill_new_routing_table/1
-%% Description: Creates and fills the replacement routing table db specific
-%% Returns: The new dict
-%%--------------------------------------------------------------------
-fill_new_routing_table(Db) ->
-    Dict1 = dict:store(1, "http://localhost:5988/" ++ Db ++ "/", dict:new()),
-    dict:store(2, "http://localhost:5989/" ++ Db ++ "/", Dict1).
 
 %%--------------------------------------------------------------------
 %% Function: get_shard_validator/2
@@ -208,6 +165,9 @@ get_shard_validator(Shard, NumShards) ->
 %% Returns: ibrowse response
 %%--------------------------------------------------------------------
 store_validator(Validator, Url) ->
+    io:format("put ~s~n", [Url]),
+    {ok, "201", _Headers, Response} = ibrowse:send_req(Url, [], put, ""),
+    io:format("~w~n", [Response]),
     DesignDoc = mochijson2:encode(
         {struct, [
             {<<"_id">>, <<"_design/shard">>},
@@ -223,42 +183,43 @@ store_validator(Validator, Url) ->
 %% Description: creates sharding validators for the given shard and the rest of the Dict
 %% Returns: ok or error
 %%--------------------------------------------------------------------
-create_shard_validator(Shard, Dict) ->
+create_shard_validator(Db, Shard, Dict) ->
     NumShards = dict:size(Dict),
     Validator = get_shard_validator(Shard, NumShards),
     Result = case dict:find(Shard, Dict) of
-        {ok, Url} -> store_validator(Validator, Url);
+        {ok, Url} -> store_validator(Validator, Url ++ Db);
         _ -> error
     end,
     case Result of
         {ok, "201", _Headers, _Response} ->
             case NumShards of
                 Shard -> ok;
-                _ -> create_shard_validator(Shard + 1, Dict)
+                _ -> create_shard_validator(Db, Shard + 1, Dict)
             end;
         _ -> error
     end.
 
 %%--------------------------------------------------------------------
-%% Function: create_shard_validators/1
-%% Description: creates sharding validators for all servers in Dict
+%% Function: create_shard_validators/2
+%% Description: creates sharding validators for Db for all servers in Dict
 %% Returns: ok or error
 %%--------------------------------------------------------------------
-create_shard_validators(Dict) ->
-    create_shard_validator(1, Dict).
+create_shard_validators(Db, Dict) ->
+    create_shard_validator(Db, 1, Dict).
 
 %%--------------------------------------------------------------------
-%% Function: init_replication/2
+%% Function: init_replication/3
 %% Description: Sets up a continuous pull replication
 %% Returns: The ibrowse response
 %%--------------------------------------------------------------------
-init_replication(Source, Target) ->
+init_replication(Db, Source, Target) ->
     Url = Source ++ "_replicate",
-    Db = lists:sublist(string:tokens(Target, "/"), 3, 1),
+    TargetDb = Target ++ Db,
+    io:format("init_replication from ~s/~s to ~s~n", [Source, Db, TargetDb]),
     Message = mochijson2:encode(
         {struct, [
             {<<"source">>, list_to_binary(Db)},
-            {<<"target">>, list_to_binary(Target)},
+            {<<"target">>, list_to_binary(TargetDb)},
             {<<"continuous">>, true}
         ]}
     ),
@@ -267,15 +228,15 @@ init_replication(Source, Target) ->
 %    {ok, "202", "Headers", "Response"}.
 
 %%--------------------------------------------------------------------
-%% Function: init_all_replication/4
+%% Function: init_all_replication/5
 %% Description: Sets up a continuous push replication for all shards
 %% Returns: ok or error depending on result
 %%--------------------------------------------------------------------
-init_all_replication(SourceShard, TargetShard, SourceDict, TargetDict) ->
+init_all_replication(Db, SourceShard, TargetShard, SourceDict, TargetDict) ->
     CurrentResult = case dict:find(SourceShard, SourceDict) of
         {ok, SourceUrl} ->
             case dict:find(TargetShard, TargetDict) of
-                {ok, TargetUrl} -> init_replication(SourceUrl, TargetUrl);
+                {ok, TargetUrl} -> init_replication(Db, SourceUrl, TargetUrl);
                 _ ->
                     io:format("Tried to find ~i of ~i target shards", [TargetShard, dict:size(TargetDict)]),
                     error
@@ -288,35 +249,103 @@ init_all_replication(SourceShard, TargetShard, SourceDict, TargetDict) ->
         {ok, "202", _Headers1, _Response1} ->
             case dict:size(TargetDict) of
                 TargetShard -> ok;
-                _ -> init_all_replication(SourceShard, TargetShard + 1, SourceDict, TargetDict)
+                _ -> init_all_replication(Db, SourceShard, TargetShard + 1, SourceDict, TargetDict)
             end
     end,
     case NextResult of
         ok ->
             case dict:size(SourceDict) of
                 SourceShard -> ok;
-                _ -> init_all_replication(SourceShard + 1, TargetShard, SourceDict, TargetDict)
+                _ -> init_all_replication(Db, SourceShard + 1, TargetShard, SourceDict, TargetDict)
             end
     end.
 
 %%--------------------------------------------------------------------
-%% Function: execute_reshard/2
-%% Description: Currently sets up validation filters for resharding the Db
+%% Function: init_all_databases_replication/3
+%% Description: Initiates replication for all databases
 %% Returns: ok or error depending on result
 %%--------------------------------------------------------------------
-execute_reshard(Db, RoutingTable) ->
-    TargetDict = fill_new_routing_table(Db),
-    create_shard_validators(TargetDict),
-    init_all_replication(1, 1, RoutingTable, TargetDict).
-    
+init_all_databases_replication([], _, _) -> ok;
+init_all_databases_replication([Db | Tail], RoutingTable, NewRoutingTable) ->
+    io:format("Setting up replication of ~s~n", [Db]),
+    init_all_replication(Db, 1, 1, RoutingTable, NewRoutingTable),
+    init_all_databases_replication(Tail, RoutingTable, NewRoutingTable).
+
 %%--------------------------------------------------------------------
-%% Function: get/2
-%% Description: Retrieves the requested Value from Dict
-%% Returns: The Value of Key in Dict
+%% Function: create_all_databases_shard_validators/3
+%% Description: Initiates replication for all databases
+%% Returns: ok or error depending on result
 %%--------------------------------------------------------------------
-get(Key, Dict) ->
+create_all_databases_shard_validators([], _) -> ok;
+create_all_databases_shard_validators([Db | Tail], NewRoutingTable) ->
+    io:format("Creating shard validator for ~s~n", [Db]),
+    create_shard_validators(Db, NewRoutingTable),
+    create_all_databases_shard_validators(Tail, NewRoutingTable).
+
+%%--------------------------------------------------------------------
+%% Function: execute_reshard/1
+%% Description: Starts replication to new resharding servers
+%% Returns: ok or error depending on result
+%%--------------------------------------------------------------------
+execute_reshard(RoutingTable) ->
+    {ok, NewRoutingTable} = set_routing_table(couch_config:get("resharding", "routing_table")),
+    create_all_databases_shard_validators(get_databases(), NewRoutingTable),
+    init_all_databases_replication(get_databases(), RoutingTable, NewRoutingTable).
+
+%%--------------------------------------------------------------------
+%% Function: execute_flip/1
+%% Description: Flips from using old routing table to the new one. Also updates
+%%     the config file
+%% Returns: {ok, NewRoutingTable} or {error, RoutingTable}
+%%--------------------------------------------------------------------
+execute_flip(RoutingTable) ->
+    case set_routing_table(couch_config:get("resharding", "routing_table")) of
+        {ok, NewRoutingTable} ->
+            ok = couch_config:set("old_routing", "routing_table", couch_config:get("routing", "routing_table"), true),
+            ok = couch_config:set("routing", "routing_table", couch_config:get("resharding", "routing_table"), true),
+            ok = couch_config:delete("resharding", "routing_table", true),
+            {ok, NewRoutingTable};
+        _ -> {error, RoutingTable}
+    end.
+
+%%--------------------------------------------------------------------
+%% Function: get_routing/2
+%% Description: Retrieves the server for Id from Dict
+%% Returns: The server URL as a string
+%%--------------------------------------------------------------------
+get_routing(Id, Dict) ->
+    Key = lists:sum(Id) rem dict:size(Dict) + 1,
+    io:format("Shard: ~i for ~s~n", [Key, Id]),
     dict:fetch(Key, Dict).
 
+%%--------------------------------------------------------------------
+%% Function: set_routing/3
+%% Description: Adds the new route to the routing table
+%% Returns: The updated routing table
+%%--------------------------------------------------------------------
+set_routing(_NextNum, [], Dict) -> Dict;
+set_routing(NextNum, [Head|Tail], OldDict) ->
+    io:format("Route shard: ~B -> ~s~n", [NextNum, Head]),
+    NewDict = dict:store(NextNum, Head, OldDict),
+    set_routing(NextNum + 1, Tail, NewDict).
+
+%%--------------------------------------------------------------------
+%% Function: set_routing_table/1
+%% Description: Purges and reloads the routing table
+%% Returns: {upgrade, PreVersion, PostVersion}
+%%--------------------------------------------------------------------
+set_routing_table(NewRoutingTable) ->
+    FullTable = set_routing(1, re:split(NewRoutingTable, " *, *", [{return, list}]), dict:new()),
+    {ok, FullTable}.
+
+%%--------------------------------------------------------------------
+%% Function: get_databases/0
+%% Description: Returns the names of the databases controlled by Pillow
+%% Returns: A list of db names
+%%--------------------------------------------------------------------
+get_databases() ->
+    re:split(couch_config:get("pillow", "databases"), ",", [{return, list}]).
+    
 %%--------------------------------------------------------------------
 %% Function: reload_routing_table/0
 %% Description: Purges and reloads the routing table

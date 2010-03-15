@@ -23,31 +23,12 @@
 %%--------------------------------------------------------------------
 %% Function: uuid/0
 %% Description: Generates a hexadecimal uuid as couchdb does.
-%%    (Borrowed from couch_util in couchdb)
+%%    (Borrowed from couch_uuids in couchdb)
 %% Returns: Hexadecimal list
 %%--------------------------------------------------------------------
 uuid() ->
-    to_hex(crypto:rand_bytes(16)).
+    couch_util:to_hex(crypto:rand_bytes(16)).
 
 %--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
 %%--------------------------------------------------------------------
-
-%%--------------------------------------------------------------------
-%% Function: to_hex/1
-%% Description: Converts the input binary to a hexadecimal list
-%%    (Borrowed from couch_util in couchdb)
-%% Returns: Hexadecimal list
-%%--------------------------------------------------------------------
-to_hex([]) -> [];
-to_hex(Bin) when is_binary(Bin) -> to_hex(binary_to_list(Bin));
-to_hex([H|T]) -> [to_digit(H div 16), to_digit(H rem 16) | to_hex(T)].
-
-%%--------------------------------------------------------------------
-%% Function: make_target_url/2
-%% Description: Converts the given number to an ascii digit
-%%    (Borrowed from couch_util in couchdb)
-%% Returns: TargetUrl
-%%--------------------------------------------------------------------
-to_digit(N) when N < 10 -> $0 + N;
-to_digit(N) -> $a + N-10.

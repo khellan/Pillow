@@ -30,8 +30,14 @@
 %% Description: application start callback for Pillow.
 %% Returns: ServerRet
 %%--------------------------------------------------------------------
-start(_Type, _StartArgs) ->
-    pillow_sup:start_link().
+start(_Type, DefaultIniFiles) ->
+    IniFiles = case init:get_argument(pillow_ini) of
+        error -> DefaultIniFiles;
+        {ok, [[]]} -> DefaultIniFiles;
+        {ok, [Values]} -> Values;
+        _ -> io:format("Odd error")
+    end,
+    pillow_sup:start_link(IniFiles).
 
 %%--------------------------------------------------------------------
 %% Function: stop/1

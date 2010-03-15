@@ -132,7 +132,7 @@ get_single_server_result(Server, ReqData) ->
 %%--------------------------------------------------------------------
 get_non_existing_id(Db) ->
     Id = pillow_util:uuid(),
-    Server = pillow_routing_table:get_server(Db, Id),
+    Server = pillow_routing_table:get_server(Id),
     TargetUrl = lists:flatten([Server, Db, "/", Id]),
     {ok, Code, _Headers, _Body} = ibrowse:send_req(TargetUrl, [], get),
     case Code of
@@ -168,8 +168,8 @@ post_to_server(ReqData) ->
 %%--------------------------------------------------------------------
 get_all_server_results(ReqData) ->
     PathElements = wrq:path_tokens(ReqData),
-    {Db, Id} = case length(PathElements) of
+    {_Db, Id} = case length(PathElements) of
         1 -> {lists:nth(1, PathElements), ""};
         _ -> {lists:nth(1, PathElements), lists:nth(2, PathElements)}
     end,
-    get_single_server_result(pillow_routing_table:get_server(Db, Id), ReqData).
+    get_single_server_result(pillow_routing_table:get_server(Id), ReqData).

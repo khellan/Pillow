@@ -15,26 +15,77 @@
 -module(pillow_sup).
 -behaviour(supervisor).
 
--export([start_link/0,init/1]).
+-export([start_link/1, init/1, couch_config_start_link_wrapper/2, start_webmachine/0]).
+-export([pillow_routing_table_start_link_wrapper/1]).
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS
 %%--------------------------------------------------------------------
 
 %%--------------------------------------------------------------------
-%% Function: start_link/0
+%% Function: couch_config_start_link_wrapper/1
+%% Description: Wrapper for keeping couch_config running
+%% Returns: ServerRet
+%%--------------------------------------------------------------------
+couch_config_start_link_wrapper(IniFiles, FirstConfigPid) ->
+    case is_process_alive(FirstConfigPid) of
+        true ->
+            link(FirstConfigPid),
+            {ok, FirstConfigPid};
+        false -> couch_config:start_link(IniFiles)
+    end.
+
+%%--------------------------------------------------------------------
+%% Function: pillow_routing_table_start_link_wrapper/1
+%% Description: Wrapper for keeping pillow_routing_table running
+%% Returns: ServerRet
+%%--------------------------------------------------------------------
+pillow_routing_table_start_link_wrapper(FirstRoutingPid) ->
+    case is_process_alive(FirstRoutingPid) of
+        true ->
+            link(FirstRoutingPid),
+            {ok, FirstRoutingPid};
+        false -> pillow_routing_table:start_link()
+    end.
+
+%%--------------------------------------------------------------------
+%% Function: start_link/1
 %% Description: Starts the supervisor
 %% Returns: ServerRet
 %%--------------------------------------------------------------------
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start_link(IniFiles) ->
+	{ok, ConfigPid} = couch_config:start_link(IniFiles),
+    {ok, RoutingPid} = pillow_routing_table:start_link(),
+
+    BaseChildSpecs =
+    {{one_for_all, 10, 3600},
+        [{couch_config,
+            {pillow_sup, couch_config_start_link_wrapper, [IniFiles, ConfigPid]},
+            permanent,
+            brutal_kill,
+            worker,
+            [couch_config]},
+        {webmachine,
+            {pillow_sup, start_webmachine, []},
+            permanent,
+            infinity,
+            supervisor,
+            [pillow_sup]},
+        {pillow_routing_table,
+            {pillow_sup, pillow_routing_table_start_link_wrapper, [RoutingPid]},
+            permanent,
+            infinity,
+            supervisor,
+            [pillow_sup]}
+        ]},
+    supervisor:start_link({local, ?MODULE}, ?MODULE, BaseChildSpecs).
 
 %%--------------------------------------------------------------------
-%% Function: init/1
+%% Function: start_webmachine/0
 %% Description: Starts webmachine
-%% Returns: {ok, {{one_for_one, 10, 10}, Processes}}
+%% Returns: ServerRet
 %%--------------------------------------------------------------------
-init([]) ->
+start_webmachine() ->
     Ip = case os:getenv("WEBMACHINE_IP") of false -> "0.0.0.0"; Any -> Any end,
     WebConfig = [
 		 {ip, Ip},
@@ -46,7 +97,15 @@ init([]) ->
 	   {webmachine_mochiweb, start, [WebConfig]},
 	   permanent, 5000, worker, dynamic},
     Processes = [Web],
-    {ok, {{one_for_one, 10, 10}, Processes}}.
+    supervisor:start_link({local, start_webmachine}, pillow_sup, {{one_for_one, 10, 10}, Processes}).
+
+%%--------------------------------------------------------------------
+%% Function: init/1
+%% Description: Starts webmachine
+%% Returns: {ok, {{one_for_one, 10, 10}, Processes}}
+%%--------------------------------------------------------------------
+init(ChildSpecs) ->
+    {ok, ChildSpecs}.
 
 %%--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
