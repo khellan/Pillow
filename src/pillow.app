@@ -17,6 +17,7 @@
   {vsn, "0.1"},
   {modules, [
     couch_config,
+    couch_config_writer,
     couch_util,
     pillow,
     pillow_app,
