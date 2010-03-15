@@ -17,6 +17,7 @@
   {vsn, "0.1"},
   {modules, [
     couch_config,
+    couch_util,
     pillow,
     pillow_app,
     pillow_couch,
@@ -26,8 +27,13 @@
     pillow_reducer,
     pillow_util,
     reducers]},
-  {registered, []},
+  {registered, [
+    couch_config,
+    pillow_routing_table
+  ]},
   {applications, [kernel, stdlib, crypto]},
   {env, []},
-  {mod, {pillow_app, []}}
+  {mod, {pillow_app, [
+    "./etc/pillow.ini"
+  ]}}
 ]}.
