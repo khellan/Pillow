@@ -11,13 +11,15 @@ Roadmap:
 The current goal is to add resharding to Pillow. 
 1. Automatic generation of resharding validate functions *Done*
 2. Automatic resharding using validate functions *Done*
-3. CouchDB style config files
-4. Resharding controlled through config files (original, resharding, final)
-   The original config file defines how routing will be done, the resharding
-   one controls how resharding will be done meaning it has both the before
-   and after configs and the after config will not be used actively at this step.
-   When the final config file which is of the same format as the original is
-   enabled, the new sharding setup is used and the old servers may be torn
-   down.
-5. End-to-end resharding through a single call
-
+3. CouchDB style config files *Done*
+4. Resharding controlled through the config file. The [routing] section is the
+   original routing config. [resharding] is the intended routing config. Call
+   pillow_routing_table:reshard() to start replicating to the new nodes. Observe
+   that the replication completed before executing pillow_routing_table:flip() to
+   start using the new nodes. flip also updates the config. At this point, the old
+   servers may be torn down. *Done*
+5. End-to-end resharding through a single call. Pillow will wait until replication is
+   complete before flipping to the new servers. Tearing down the old ones will still
+   be manual.
+6. Daemonize Pillow and add control script that will also control resharding.
+7. Monitoring UI that will show stats and general health of Pillow.
