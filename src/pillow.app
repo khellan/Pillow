@@ -14,7 +14,7 @@
 
 {application, pillow, [
   {description, "Pillow, the CouchDB router and rereducer"},
-  {vsn, "0.1"},
+  {vsn, "0.2"},
   {modules, [
     couch_config,
     couch_config_writer,
