@@ -20,7 +20,7 @@
 -export([handle_call/3, handle_cast/2, handle_info/2, code_change/3]).
 
 % Functions for general use
--export([update_routing_table/0, get_server/1, reshard/0, flip/0]).
+-export([update_routing_table/0, to_list/0, get_server/1, reshard/0, flip/0]).
 
 -vsn(0.4).
 
@@ -62,6 +62,14 @@ init(_) ->
     set_routing_table(couch_config:get("routing", "routing_table")).
 
 %%--------------------------------------------------------------------
+%% Function: to_list/0
+%% Description: Creates a list of the values in Dict
+%% Returns: A list with values from Dict
+%%--------------------------------------------------------------------
+to_list() ->
+    gen_server:call(?MODULE, to_list).
+
+%%--------------------------------------------------------------------
 %% Function: get_server/1
 %% Description: Retrieves the right server for the Db, Id pair
 %% Returns: A server url
@@ -101,6 +109,8 @@ flip() ->
 %%--------------------------------------------------------------------
 handle_call({get_server, Id}, _From, RoutingTable) ->    
     {reply, get_routing(Id, RoutingTable), RoutingTable};
+handle_call(to_list, _From, RoutingTable) ->
+    {reply, dict:to_list(RoutingTable), RoutingTable};
 handle_call(update_routing_table, _From, _OldRoutingTable) ->
     {upgrade, PreVersion, PostVersion} = reload_routing_table(),
     {reply, {upgrade, PreVersion, PostVersion}, set_routing_table(couch_config:get("routing", "routing_table"))};
