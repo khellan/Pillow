@@ -26,6 +26,7 @@
     pillow_routing_table,
     pillow_router,
     pillow_reducer,
+    pillow_status,
     pillow_util,
     reducers]},
   {registered, [

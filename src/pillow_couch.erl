@@ -37,11 +37,11 @@ init([]) -> {ok, undefined}.
 %%--------------------------------------------------------------------
 to_json(ReqData, Context) ->
     io:format("~s: ~s~n", [wrq:method(ReqData), wrq:raw_path(ReqData)]),
-    Id = lists:nth(2, wrq:path_tokens(ReqData)),
-    case Id of
-        "_design" -> pillow_reducer:to_json(ReqData, Context);
-        _ -> pillow_router:to_json(ReqData, Context)
-    end.
+    PathLength = length(wrq:path_tokens(ReqData)),
+    if
+        PathLength < 2 -> get_status(ReqData, Context);
+        true -> forward_request(ReqData, Context)
+    end.      
 
 %%--------------------------------------------------------------------
 %% Function: receive_data/2
@@ -117,3 +117,25 @@ allowed_methods(ReqData, Context) ->
 %%--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
 %%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
+%% Function: get_status/2
+%% Description: Returns version number and server list
+%% Returns: HTML
+%%--------------------------------------------------------------------
+get_status(ReqData, Context) ->
+    pillow_status:to_html(ReqData, Context).
+
+%%--------------------------------------------------------------------
+%% Function: forward_request/2
+%% Description: Returns the result of a forward request to child servers
+%% Returns: The result of the request
+%%--------------------------------------------------------------------
+forward_request(ReqData, Context) ->
+    Id = lists:nth(2, wrq:path_tokens(ReqData)),
+    case Id of
+        "_design" -> pillow_reducer:to_json(ReqData, Context);
+        _ -> pillow_router:to_json(ReqData, Context)
+    end.
+
+

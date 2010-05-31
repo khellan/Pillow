@@ -14,7 +14,7 @@
 
 -module(pillow).
 
--export([start/0, stop/0, update_routing_table/0, update_view_map/0]).
+-export([start/0, stop/0, update_routing_table/0, update_view_map/0, get_version/0]).
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS
@@ -67,6 +67,19 @@ update_view_map() ->
     [{attributes, PostAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, reducers:module_info()),
     [{vsn, [PostVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PostAttributes),
     {upgrade, PreVersion, PostVersion}.
+
+%%--------------------------------------------------------------------
+%% Function: get_version/0
+%% Description: Returns the version number of Pillow
+%% Returns: Version number
+%%--------------------------------------------------------------------
+get_version() ->
+    case lists:keysearch(pillow, 1, application:loaded_applications()) of
+    {value, {_, _, Vsn}} ->
+        Vsn;
+    false ->
+        "0.0.0"
+    end.
 
 %%--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
