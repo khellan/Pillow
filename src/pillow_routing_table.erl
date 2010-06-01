@@ -132,7 +132,7 @@ handle_call({set_routing_table, NewRoutingTable}, _From, _RoutingTable) ->
     {ok, RoutingTable} = set_routing_table(NewRoutingTable),
     {reply, ok, RoutingTable};
 handle_call(status, _From, RoutingTable) ->
-    {ok, NewRoutingTable} = get_resharding_routing_table(),
+    {ok, NewRoutingTable} = safely_get_resharding_routing_table(),
     {reply, {dict:to_list(RoutingTable), dict:to_list(NewRoutingTable)}, RoutingTable}.
 
 %%--------------------------------------------------------------------
@@ -311,6 +311,17 @@ create_all_databases_shard_validators([Db | Tail], NewRoutingTable) ->
 %%--------------------------------------------------------------------
 get_resharding_routing_table() ->
     set_routing_table(couch_config:get("resharding", "routing_table")).
+
+%%--------------------------------------------------------------------
+%% Function: safely_get_resharding_routing_table/0
+%% Description: Same as above, but doesn't fail if not found
+%% Returns: The resharding routing table or an empty dict
+%%--------------------------------------------------------------------
+safely_get_resharding_routing_table() ->
+    case couch_config:get("resharding", "routing_table") of
+        undefined -> {ok, dict:new()};
+        List -> set_routing_table(List)
+    end.
 
 %%--------------------------------------------------------------------
 %% Function: execute_reshard/1
