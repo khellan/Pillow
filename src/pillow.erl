@@ -14,7 +14,7 @@
 
 -module(pillow).
 
--export([start/0, stop/0, update_routing_table/0, update_view_map/0, get_version/0]).
+-export([start/0, stop/0, update_routing_table/0, update_view_map/0, get_version/0, reshard/0, flip/0]).
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS
@@ -80,6 +80,22 @@ get_version() ->
     false ->
         "0.0.0"
     end.
+
+%%--------------------------------------------------------------------
+%% Function: reshard/0
+%% Description: Tells the routing table to reshard
+%% Returns: ok
+%%--------------------------------------------------------------------
+reshard() ->
+    pillow_routing_table:reshard().
+
+%%--------------------------------------------------------------------
+%% Function: flip/0
+%% Description: Tells the routing table to flip to the new servers
+%% Returns: ok
+%%--------------------------------------------------------------------
+flip() ->
+    pillow_routing_table:flip().
 
 %%--------------------------------------------------------------------
 %% INTERNAL FUNCTIONS
