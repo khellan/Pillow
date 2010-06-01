@@ -54,13 +54,19 @@ to_html(ReqData, Context) ->
 %% Description: Creates html status from the input information
 %% Returns: HTML status information
 %%--------------------------------------------------------------------
-html_encode({Version, Servers}) ->
+html_encode({Version, {CurrentServers, NewServers}}) ->
     "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>"
     ++ "<html>"
-    ++ "<head><title>Pillow Status</title><meta http-equiv='Content-Type' content='text/html;charset=utf-8'></head>"
-    ++ "<body><h1>Pillow " ++ Version ++ " Status</h1><ul>"
-    ++ lists:map(fun({_, Server}) -> "<li>" ++ Server ++ "</li>" end, Servers)
-    ++ "</ul></body></html>".
+    ++ "<head><title>Pillow Status</title>"
+    ++ "<meta http-equiv='refresh' content='5' />"
+    ++ "<meta http-equiv='Content-Type' content='text/html;charset=utf-8'></head>"
+    ++ "<body><h1>Pillow " ++ Version ++ " Status</h1>"
+    ++ "<div class='current_servers'><h2>Current Servers</h2><ul>"
+    ++ lists:map(fun({_, Server}) -> "<li>" ++ Server ++ "</li>" end, CurrentServers)
+    ++ "</ul></div>"
+    ++ "<div class='new_servers'><h2>New Servers</h2><ul>"
+    ++ lists:map(fun({_, Server}) -> "<li>" ++ Server ++ "</li>" end, NewServers)
+    ++ "</ul></div></body></html>".
 
 json_prepare_status({Version, Servers}) ->
     {struct, [{version, Version}, {servers, lists:map(fun({_, Server}) -> Server end, Servers)}]}.
@@ -71,4 +77,4 @@ json_prepare_status({Version, Servers}) ->
 %% Returns: Status information
 %%--------------------------------------------------------------------
 get_status() ->
-    {pillow:get_version(), pillow_routing_table:to_list()}.
+    {pillow:get_version(), pillow_routing_table:get_status()}.

@@ -18,6 +18,7 @@
 % gen_server functions
 -export([init/1, start_link/0, stop/0, terminate/2]).
 -export([handle_call/3, handle_cast/2, handle_info/2, code_change/3]).
+-export([get_status/0]).
 
 % Functions for general use
 -export([update_routing_table/0, to_list/0, get_server/1, reshard/0, flip/0]).
@@ -101,13 +102,21 @@ reshard() ->
 %%--------------------------------------------------------------------
 flip() ->
     gen_server:call(?MODULE, flip).
-    
+
+%%--------------------------------------------------------------------
+%% Function: get_status/0
+%% Description: Toggles the resharding in progress flag
+%% Returns: {CurrentRoutingTableAsList, NewRoutingTableAsList}
+%%--------------------------------------------------------------------
+get_status() ->
+    gen_server:call(?MODULE, status).
+
 %%--------------------------------------------------------------------
 %% Function: handle_call/3
 %% Description: Handler for gen_server:call
 %% Returns: {reply, Message, RoutingTable}
 %%--------------------------------------------------------------------
-handle_call({get_server, Id}, _From, RoutingTable) ->    
+handle_call({get_server, Id}, _From, RoutingTable) ->
     {reply, get_routing(Id, RoutingTable), RoutingTable};
 handle_call(to_list, _From, RoutingTable) ->
     {reply, dict:to_list(RoutingTable), RoutingTable};
@@ -121,7 +130,10 @@ handle_call(flip, _From, RoutingTable) ->
     {reply, ok, NewRoutingTable};    
 handle_call({set_routing_table, NewRoutingTable}, _From, _RoutingTable) ->
     {ok, RoutingTable} = set_routing_table(NewRoutingTable),
-    {reply, ok, RoutingTable}.
+    {reply, ok, RoutingTable};
+handle_call(status, _From, RoutingTable) ->
+    {ok, NewRoutingTable} = get_resharding_routing_table(),
+    {reply, {dict:to_list(RoutingTable), dict:to_list(NewRoutingTable)}, RoutingTable}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast/2
@@ -293,12 +305,20 @@ create_all_databases_shard_validators([Db | Tail], NewRoutingTable) ->
     create_all_databases_shard_validators(Tail, NewRoutingTable).
 
 %%--------------------------------------------------------------------
+%% Function: get_resharding_routing_table/0
+%% Description: Gets the config stating the new routing Table
+%% Returns: ok or error depending on result
+%%--------------------------------------------------------------------
+get_resharding_routing_table() ->
+    set_routing_table(couch_config:get("resharding", "routing_table")).
+
+%%--------------------------------------------------------------------
 %% Function: execute_reshard/1
 %% Description: Starts replication to new resharding servers
 %% Returns: ok or error depending on result
 %%--------------------------------------------------------------------
 execute_reshard(RoutingTable) ->
-    {ok, NewRoutingTable} = set_routing_table(couch_config:get("resharding", "routing_table")),
+    {ok, NewRoutingTable} = get_resharding_routing_table(),
     create_all_databases_shard_validators(get_databases(), NewRoutingTable),
     init_all_databases_replication(get_databases(), RoutingTable, NewRoutingTable).
 
