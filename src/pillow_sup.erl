@@ -138,6 +138,6 @@ init(ChildSpecs) ->
 %%--------------------------------------------------------------------
 dispatch_map() ->
     [
-        {['static', '*'], static_resource, [couch_config:get("pillow", "document_root")]},
+        {["static", '*'], static_resource, [couch_config:get("pillow", "document_root")]},
         {['*'], pillow_couch, []}
     ].
