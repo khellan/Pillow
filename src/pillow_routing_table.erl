@@ -21,10 +21,10 @@
 -export([get_status/0]).
 
 % Functions for general use
--export([update_routing_table/0, to_list/0, get_server/1, reshard/0, flip/0]).
+-export([update_routing_table/0, to_list/0, get_server/1, reshard/1, flip/0]).
 
 % Functions meant for spawning
--export([execute_reshard/1]).
+-export([execute_reshard/2]).
 
 -vsn(0.4).
 
@@ -91,12 +91,12 @@ update_routing_table() ->
     gen_server:call(?MODULE, update_routing_table).
 
 %%--------------------------------------------------------------------
-%% Function: reshard/0
+%% Function: reshard/1
 %% Description: Currently sets up validation filters for resharding the databases
 %% Returns: ok
 %%--------------------------------------------------------------------
-reshard() ->
-    gen_server:call(?MODULE, reshard).
+reshard(AutoFlip) ->
+    gen_server:cast(?MODULE, {reshard, AutoFlip}).
 
 %%--------------------------------------------------------------------
 %% Function: flip/0
@@ -127,12 +127,8 @@ handle_call(to_list, _From, RoutingTable) ->
 handle_call(update_routing_table, _From, _OldRoutingTable) ->
     {upgrade, PreVersion, PostVersion} = reload_routing_table(),
     {reply, {upgrade, PreVersion, PostVersion}, set_routing_table(couch_config:get("routing", "routing_table"), true)};
-handle_call(reshard, _From, RoutingTable) ->
-    spawn(?MODULE, execute_reshard, [RoutingTable]),
-    {reply, ok, RoutingTable};
 handle_call(flip, _From, RoutingTable) ->
     {ok, NewRoutingTable} = execute_flip(RoutingTable),
-    pillow_monitor:update_status(pillow_reshard_status, ok),
     {reply, ok, NewRoutingTable};
 handle_call({set_routing_table, NewRoutingTable}, _From, _RoutingTable) ->
     {ok, RoutingTable} = set_routing_table(NewRoutingTable, true),
@@ -146,6 +142,9 @@ handle_call(status, _From, RoutingTable) ->
 %% Description: Handler for gen_server:cast
 %% Returns: {stop, normal, RoutingTable}
 %%--------------------------------------------------------------------
+handle_cast({reshard, AutoFlip}, RoutingTable) ->
+    spawn(?MODULE, execute_reshard, [RoutingTable, AutoFlip]),
+    {noreply, RoutingTable};
 handle_cast(stop, RoutingTable) ->
     {stop, normal, RoutingTable}.
 
@@ -340,17 +339,20 @@ safely_get_resharding_routing_table(LogInfo) ->
     end.
 
 %%--------------------------------------------------------------------
-%% Function: execute_reshard/1
+%% Function: execute_reshard/2
 %% Description: Starts replication to new resharding servers
 %% Returns: ok or error depending on result
 %%--------------------------------------------------------------------
-execute_reshard(RoutingTable) ->
+execute_reshard(RoutingTable, AutoFlip) ->
     pillow_monitor:update_status(pillow_reshard_status, resharding),
     {ok, NewRoutingTable} = get_resharding_routing_table(true),
     create_all_databases_shard_validators(get_databases(), NewRoutingTable),
     init_all_databases_replication(get_databases(), RoutingTable, NewRoutingTable, false),
     init_all_databases_replication(get_databases(), RoutingTable, NewRoutingTable, true),
-    pillow_monitor:update_status(pillow_reshard_status, ready).
+    case AutoFlip of
+        true -> flip();
+        _ -> pillow_monitor:update_status(pillow_reshard_status, ready)
+    end.
 
 %%--------------------------------------------------------------------
 %% Function: execute_flip/1
@@ -359,14 +361,18 @@ execute_reshard(RoutingTable) ->
 %% Returns: {ok, NewRoutingTable} or {error, RoutingTable}
 %%--------------------------------------------------------------------
 execute_flip(RoutingTable) ->
-    case set_routing_table(couch_config:get("resharding", "routing_table"), true) of
+    pillow_monitor:update_status(pillow_reshard_status, flipping),
+    Result = case set_routing_table(couch_config:get("resharding", "routing_table"), true) of
         {ok, NewRoutingTable} ->
             ok = couch_config:set("old_routing", "routing_table", couch_config:get("routing", "routing_table"), true),
             ok = couch_config:set("routing", "routing_table", couch_config:get("resharding", "routing_table"), true),
             ok = couch_config:delete("resharding", "routing_table", true),
             {ok, NewRoutingTable};
         _ -> {error, RoutingTable}
-    end.
+    end,
+    {Status, _RoutingTable} = Result,
+    pillow_monitor:update_status(pillow_reshard_status, Status),
+    Result.
 
 %%--------------------------------------------------------------------
 %% Function: get_routing/2
