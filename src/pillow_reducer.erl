@@ -116,17 +116,18 @@ single_server_result_retriever(Server, ReqData) ->
 
 %%--------------------------------------------------------------------
 %% Function: get_all_responses/1
-%% Description: Waits for response from all servers. Times out after
-%%    1 second
+%% Description: Waits for response from all servers. Times out as
+%%    specified by pillow, view_timeout in the config
 %% Returns: A list of all the server responses
 %%--------------------------------------------------------------------
 get_all_responses([]) -> [];
 get_all_responses(Servers) ->
+    {Timeout, []} = string:to_integer(couch_config:get("pillow", "view_timeout")),
     receive
         {Pid, Response} ->
             NewServers = lists:delete(Pid, Servers),
             lists:flatten([Response, get_all_responses(NewServers)])
-        after 250 -> []
+        after Timeout -> []
     end.
 
 %%--------------------------------------------------------------------
