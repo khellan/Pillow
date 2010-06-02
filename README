@@ -18,8 +18,8 @@ The current goal is to add resharding to Pillow.
    that the replication completed before executing pillow_routing_table:flip() to
    start using the new nodes. flip also updates the config. At this point, the old
    servers may be torn down. *Done*
+7. Monitoring UI that will show stats and general health of Pillow *Done*
 5. End-to-end resharding through a single call. Pillow will wait until replication is
    complete before flipping to the new servers. Tearing down the old ones will still
    be manual.
 6. Daemonize Pillow and add control script that will also control resharding.
-7. Monitoring UI that will show stats and general health of Pillow.
