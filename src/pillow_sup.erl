@@ -137,4 +137,7 @@ init(ChildSpecs) ->
 %% Returns: The dispatch map
 %%--------------------------------------------------------------------
 dispatch_map() ->
-    [{['*'], pillow_couch, []}].
+    [
+        {['static', '*'], static_resource, [couch_config:get("pillow", "document_root")]},
+        {['*'], pillow_couch, []}
+    ].
