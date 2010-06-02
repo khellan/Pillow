@@ -60,6 +60,7 @@ terminate(_Reason, _RoutingTable) ->
 %% Returns: {ok, RoutingTable}
 %%--------------------------------------------------------------------
 init(_) ->
+    pillow_monitor:add_status(pillow_reshard_status, ok),
     set_routing_table(couch_config:get("routing", "routing_table")).
 
 %%--------------------------------------------------------------------
@@ -124,10 +125,14 @@ handle_call(update_routing_table, _From, _OldRoutingTable) ->
     {upgrade, PreVersion, PostVersion} = reload_routing_table(),
     {reply, {upgrade, PreVersion, PostVersion}, set_routing_table(couch_config:get("routing", "routing_table"))};
 handle_call(reshard, _From, RoutingTable) ->
-    {reply, execute_reshard(RoutingTable), RoutingTable};
+    pillow_monitor:update_status(pillow_reshard_status, resharding),
+    Result = execute_reshard(RoutingTable),
+    pillow_monitor:update_status(pillow_reshard_status, ready),
+    {reply, Result, RoutingTable};
 handle_call(flip, _From, RoutingTable) ->
     {ok, NewRoutingTable} = execute_flip(RoutingTable),
-    {reply, ok, NewRoutingTable};    
+    pillow_monitor:update_status(pillow_reshard_status, ok),    
+    {reply, ok, NewRoutingTable};
 handle_call({set_routing_table, NewRoutingTable}, _From, _RoutingTable) ->
     {ok, RoutingTable} = set_routing_table(NewRoutingTable),
     {reply, ok, RoutingTable};
