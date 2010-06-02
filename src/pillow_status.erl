@@ -74,14 +74,17 @@ html_encode({Version, ReshardStatus, {CurrentServers, NewServers, Databases}}) -
     "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>"
     ++ "<html>"
     ++ "<head><title>Pillow Status</title>"
+    ++ "<link rel='stylesheet' href='static/styles/pillow.css' type='text/css' />"
     ++ "<meta http-equiv='refresh' content='5' />"
     ++ "<meta http-equiv='Content-Type' content='text/html;charset=utf-8'></head>"
-    ++ "<body><h1>Pillow " ++ Version ++ " Status</h1>"
+    ++ "<body>"
+    ++ "<h1>Pillow " ++ Version ++ " Status</h1>"
+    ++ "<div class='main'"
     ++ "<div class='reshard_status'>Servers are " ++ io_lib:format("~s", [ReshardStatus]) ++ "</div>"
     ++ "<div class='databases'><h2>Databases</h2>" ++ html_list("ul", "", Databases) ++ "</div>"
     ++ "<div class='current_servers'><h2>Current Servers</h2>" ++ html_list("ul", "", CurrentServers) ++ "</div>"
     ++ "<div class='new_servers'><h2>New Servers</h2>" ++ html_list("ul", "", NewServers) ++ "</div>"
-    ++ "</body></html>".
+    ++ "</div></body></html>".
 
 json_prepare_status({Version, ReshardStatus, {CurrentServers, NewServers, Databases}}) ->
     {struct, [

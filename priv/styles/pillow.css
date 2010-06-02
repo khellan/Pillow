@@ -1,0 +1,39 @@
+body {
+    border: 1px solid #cef;
+    margin: 1em;
+}
+
+h1 {
+    font-size: 100%;
+    font-variant: small-caps;
+    color: white;
+    padding: 1em;
+    margin: 0;
+    border-bottom: 1px dotted #cef;
+    background-color: #8ce;
+}
+
+h2 {
+    font-size: 100%;
+}
+
+ul {
+    list-style-type: none;
+}
+
+.main {
+    padding: 1em;
+    background-color: #f8fcff;
+}
+
+.reshard_status {
+    
+}
+
+.databases {
+
+}
+
+.current_servers {}
+
+.new_servers {}
