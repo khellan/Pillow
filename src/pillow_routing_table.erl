@@ -21,7 +21,7 @@
 -export([get_status/0]).
 
 % Functions for general use
--export([update_routing_table/0, to_list/0, get_server/1, reshard/1, flip/0]).
+-export([to_list/0, get_server/1, reshard/1, flip/0]).
 
 % Functions meant for spawning
 -export([execute_reshard/2]).
@@ -83,14 +83,6 @@ get_server(Id) ->
     gen_server:call(?MODULE, {get_server, Id}).
 
 %%--------------------------------------------------------------------
-%% Function: update_routing_table/0
-%% Description: Purges and reloads the routing table
-%% Returns: {upgrade, PreVersion, PostVersion}
-%%--------------------------------------------------------------------
-update_routing_table() ->
-    gen_server:call(?MODULE, update_routing_table).
-
-%%--------------------------------------------------------------------
 %% Function: reshard/1
 %% Description: Currently sets up validation filters for resharding the databases
 %% Returns: ok
@@ -124,9 +116,6 @@ handle_call({get_server, Id}, _From, RoutingTable) ->
     {reply, get_routing(Id, RoutingTable), RoutingTable};
 handle_call(to_list, _From, RoutingTable) ->
     {reply, dict:to_list(RoutingTable), RoutingTable};
-handle_call(update_routing_table, _From, _OldRoutingTable) ->
-    {upgrade, PreVersion, PostVersion} = reload_routing_table(),
-    {reply, {upgrade, PreVersion, PostVersion}, set_routing_table(couch_config:get("routing", "routing_table"), true)};
 handle_call(flip, _From, RoutingTable) ->
     {ok, NewRoutingTable} = execute_flip(RoutingTable),
     {reply, ok, NewRoutingTable};
@@ -414,17 +403,3 @@ set_routing_table(NewRoutingTable, LogInfo) ->
 %%--------------------------------------------------------------------
 get_databases() ->
     re:split(couch_config:get("pillow", "databases"), ",", [{return, list}]).
-    
-%%--------------------------------------------------------------------
-%% Function: reload_routing_table/0
-%% Description: Purges and reloads the routing table
-%% Returns: {upgrade, PreVersion, PostVersion}
-%%--------------------------------------------------------------------
-reload_routing_table() ->
-    [{attributes, PreAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, pillow_routing_table:module_info()),
-    [{vsn, [PreVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PreAttributes),
-    code:purge(?MODULE),
-    code:load_file(?MODULE),
-    [{attributes, PostAttributes}] = lists:filter(fun(X) -> element(1, X) == attributes end, pillow_routing_table:module_info()),
-    [{vsn, [PostVersion]}] = lists:filter(fun(X) -> element(1, X) == vsn end, PostAttributes),
-    {upgrade, PreVersion, PostVersion}.

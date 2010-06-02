@@ -14,7 +14,7 @@
 
 -module(pillow).
 
--export([start/0, stop/0, update_routing_table/0, update_view_map/0, get_version/0]).
+-export([start/0, stop/0, update_view_map/0, get_version/0]).
 -export([reshard/0, flip/0, reshard_and_flip/0]).
 
 %%--------------------------------------------------------------------
@@ -47,14 +47,6 @@ stop() ->
     application:stop(ibrowse),
     Res.
 
-%%--------------------------------------------------------------------
-%% Function: update_routing_table/0
-%% Description: Purges and reloads the routing table
-%% Returns: {upgrade, PreVersion, PostVersion}
-%%--------------------------------------------------------------------
-update_routing_table() ->
-    pillow_routing_table:update_routing_table().
-    
 %%--------------------------------------------------------------------
 %% Function: update_view_map/0
 %% Description: Reloads the view map
