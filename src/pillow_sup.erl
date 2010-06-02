@@ -16,7 +16,7 @@
 -behaviour(supervisor).
 
 -export([start_link/1, init/1, couch_config_start_link_wrapper/2, start_webmachine/0]).
--export([pillow_routing_table_start_link_wrapper/1]).
+-export([pillow_routing_table_start_link_wrapper/1, pillow_monitor_start_link_wrapper/1]).
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS
@@ -49,12 +49,26 @@ pillow_routing_table_start_link_wrapper(FirstRoutingPid) ->
     end.
 
 %%--------------------------------------------------------------------
+%% Function: pillow_monitor_start_link_wrapper/1
+%% Description: Wrapper for keeping pillow_monitor running
+%% Returns: ServerRet
+%%--------------------------------------------------------------------
+pillow_monitor_start_link_wrapper(FirstMonitorPid) ->
+    case is_process_alive(FirstMonitorPid) of
+        true ->
+            link(FirstMonitorPid),
+            {ok, FirstMonitorPid};
+        false -> pillow_monitor:start_link()
+    end.
+
+%%--------------------------------------------------------------------
 %% Function: start_link/1
 %% Description: Starts the supervisor
 %% Returns: ServerRet
 %%--------------------------------------------------------------------
 start_link(IniFiles) ->
 	{ok, ConfigPid} = couch_config:start_link(IniFiles),
+    {ok, MonitorPid} = pillow_monitor:start_link(),
     {ok, RoutingPid} = pillow_routing_table:start_link(),
 
     BaseChildSpecs =
@@ -67,6 +81,12 @@ start_link(IniFiles) ->
             [couch_config]},
         {webmachine,
             {pillow_sup, start_webmachine, []},
+            permanent,
+            infinity,
+            supervisor,
+            [pillow_sup]},
+        {pillow_monitor,
+            {pillow_sup, pillow_monitor_start_link_wrapper, [MonitorPid]},
             permanent,
             infinity,
             supervisor,

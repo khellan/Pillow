@@ -22,6 +22,7 @@
     pillow,
     pillow_app,
     pillow_couch,
+    pillow_monitor,
     pillow_sup,
     pillow_routing_table,
     pillow_router,
@@ -31,6 +32,7 @@
     reducers]},
   {registered, [
     couch_config,
+    pillow_monitor,
     pillow_routing_table
   ]},
   {applications, [kernel, stdlib, crypto]},
