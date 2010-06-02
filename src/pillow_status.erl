@@ -50,11 +50,27 @@ to_html(ReqData, Context) ->
 %%--------------------------------------------------------------------
 
 %%--------------------------------------------------------------------
+%% Function: html_list/3
+%% Description: Creates html list from the input information
+%% Returns: HTML
+%%--------------------------------------------------------------------
+html_list(Type, Class, Items) ->
+    "<" ++ Type ++ " class=" ++ Class ++ ">"
+    ++ lists:map(fun(Tuple) ->
+        "<li>"
+        ++ case Tuple of
+            {_, Item} -> Item;
+            _ -> Tuple
+        end
+        ++ "</li>" end, Items)
+    ++ "</ul>".
+
+%%--------------------------------------------------------------------
 %% Function: html_encode/1
 %% Description: Creates html status from the input information
 %% Returns: HTML status information
 %%--------------------------------------------------------------------
-html_encode({Version, ReshardStatus, {CurrentServers, NewServers}}) ->
+html_encode({Version, ReshardStatus, {CurrentServers, NewServers, Databases}}) ->
     "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>"
     ++ "<html>"
     ++ "<head><title>Pillow Status</title>"
@@ -62,15 +78,19 @@ html_encode({Version, ReshardStatus, {CurrentServers, NewServers}}) ->
     ++ "<meta http-equiv='Content-Type' content='text/html;charset=utf-8'></head>"
     ++ "<body><h1>Pillow " ++ Version ++ " Status</h1>"
     ++ "<div class='reshard_status'>Servers are " ++ io_lib:format("~s", [ReshardStatus]) ++ "</div>"
-    ++ "<div class='current_servers'><h2>Current Servers</h2><ul>"
-    ++ lists:map(fun({_, Server}) -> "<li>" ++ Server ++ "</li>" end, CurrentServers)
-    ++ "</ul></div>"
-    ++ "<div class='new_servers'><h2>New Servers</h2><ul>"
-    ++ lists:map(fun({_, Server}) -> "<li>" ++ Server ++ "</li>" end, NewServers)
-    ++ "</ul></div></body></html>".
+    ++ "<div class='databases'><h2>Databases</h2>" ++ html_list("ul", "", Databases) ++ "</div>"
+    ++ "<div class='current_servers'><h2>Current Servers</h2>" ++ html_list("ul", "", CurrentServers) ++ "</div>"
+    ++ "<div class='new_servers'><h2>New Servers</h2>" ++ html_list("ul", "", NewServers) ++ "</div>"
+    ++ "</body></html>".
 
-json_prepare_status({Version, Servers}) ->
-    {struct, [{version, Version}, {servers, lists:map(fun({_, Server}) -> Server end, Servers)}]}.
+json_prepare_status({Version, ReshardStatus, {CurrentServers, NewServers, Databases}}) ->
+    {struct, [
+        {version, Version},
+        {reshard_status, ReshardStatus},
+        {current_servers, lists:map(fun({_, Server}) -> Server end, CurrentServers)},
+        {new_servers, lists:map(fun({_, Server}) -> Server end, NewServers)},
+        {databases, lists:map(fun({_, Database}) -> Database end, Databases)}
+    ]}.
 
 %%--------------------------------------------------------------------
 %% Function: get_status/1
