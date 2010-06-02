@@ -29,7 +29,8 @@
     pillow_reducer,
     pillow_status,
     pillow_util,
-    reducers]},
+    reducers,
+    static_resource]},
   {registered, [
     couch_config,
     pillow_monitor,
