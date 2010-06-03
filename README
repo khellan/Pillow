@@ -21,4 +21,6 @@ X  Monitoring UI that will show stats and general health of Pillow *Done*
 X  End-to-end resharding through a single call. Pillow will wait until replication is
    complete before flipping to the new servers. Tearing down the old ones will still
    be manual. *Done*
-2. Daemonize Pillow and add control script that will also control resharding.
+X  control script
+X  Daemonize Pillow
+1. Control script handling resharding
