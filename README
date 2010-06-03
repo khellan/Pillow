@@ -24,3 +24,4 @@ X  End-to-end resharding through a single call. Pillow will wait until replicati
 X  control script
 X  Daemonize Pillow
 1. Control script handling resharding
+2. Time to move from deployment script to configure/make install

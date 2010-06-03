@@ -1,0 +1,7 @@
+# Sourced by init script for configuration.
+
+PILLOW_USER=couchdb
+PILLOW_STDOUT_FILE=/dev/null
+PILLOW_STDERR_FILE=/dev/null
+PILLOW_RESPAWN_TIMEOUT=5
+PILLOW_OPTIONS=

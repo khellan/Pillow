@@ -90,8 +90,15 @@ modify_start_script() {
     chmod a+x "${CONTROL_COMMAND}"
 }
 
+deploy_daemon() {
+    cp "${BASE_PATH}/etc/init/pillow" /usr/local/etc/rc.d/pillow
+    chmod a+x /usr/local/etc/rc.d/pillow
+    cp "${BASE_PATH}/etc/default/pillow" /usr/local/etc/default/pillow
+}
+
 make_directories
 deploy_dependencies
 deploy_pillow
 deploy_extras
 modify_start_script
+deploy_daemon
