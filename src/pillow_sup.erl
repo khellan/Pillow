@@ -67,6 +67,15 @@ pillow_monitor_start_link_wrapper(FirstMonitorPid) ->
 %% Returns: ServerRet
 %%--------------------------------------------------------------------
 start_link(IniFiles) ->
+    case init:get_argument(pidfile) of
+    {ok, [PidFile]} ->
+        case file:write_file(PidFile, os:getpid()) of
+        ok -> ok;
+        Error -> io:format("Failed to write PID file ~s, error: ~p", [PidFile, Error])
+        end;
+    _ -> ok
+    end,
+
 	{ok, ConfigPid} = couch_config:start_link(IniFiles),
     {ok, MonitorPid} = pillow_monitor:start_link(),
     {ok, RoutingPid} = pillow_routing_table:start_link(),
