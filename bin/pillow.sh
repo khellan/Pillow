@@ -82,6 +82,9 @@ Options:
   -o FILE     redirect background stdout to FILE (defaults to $STDOUT_FILE)
   -e FILE     redirect background stderr to FILE (defaults to $STDERR_FILE)
   -s          display the status of the background process
+  -m          multiply database nodes by resharding
+  -f          flip to use the new database nodes directly
+  -F          reshard and flip to the new databases
   -k          kill the background process, will respawn if needed
   -d          shutdown the background process
 
@@ -211,7 +214,7 @@ start_pillow () {
         touch $PID_FILE
         interactive_option="+Bd -noinput"
     fi
-    command="/usr/bin/erl $interactive_option -boot start_sasl +K true \
+    command="/usr/bin/erl -sname pillow $interactive_option -boot start_sasl +K true \
         -pa PILLOW_LIBRARIES -pillow_ini $start_arguments -s pillow"
     if test "$BACKGROUND" = "true" -a "$RECURSED" = "false"; then
         $0 $background_start_arguments -b -r $RESPAWN_TIMEOUT -p $PID_FILE \
@@ -278,10 +281,28 @@ stop_pillow () {
     fi
 }
 
+remote_command() {
+    rpc_command=$1
+    remote_shell="erl -sname pillow1 -remsh pillow@localhost"
+    echo "${rpc_command}" | ${remote_shell}
+}
+
+reshard() {
+    remote_command "rpc:call(pillow@localhost, pillow, reshard, [])."
+}
+
+flip() {
+    remote_command "rpc:call(pillow@localhost, pillow, flip, [])."    
+}
+
+reshard_and_flip() {
+    remote_command "rpc:call(pillow@localhost, pillow, reshard_and_flip, [])."
+}
+
 parse_script_option_list () {
     _load_config
     set +e
-    options=`getopt hVa:A:ncibp:r:Ro:e:skd $@`
+    options=`getopt hVa:A:ncibp:r:Ro:e:smfFkd $@`
     if test ! $? -eq 0; then
         display_error
     fi
@@ -303,6 +324,9 @@ parse_script_option_list () {
             -o) shift; STDOUT_FILE=$1; shift;;
             -e) shift; STDERR_FILE=$1; shift;;
             -s) shift; check_status; exit;;
+            -m) shift; reshard; exit;;
+            -f) shift; flip; exit;;
+            -F) shift; reshard_and_flip; exit;;
             -k) shift; KILL=true;;
             -d) shift; SHUTDOWN=true;;
             --) shift; break;;

@@ -23,5 +23,5 @@ X  End-to-end resharding through a single call. Pillow will wait until replicati
    be manual. *Done*
 X  control script
 X  Daemonize Pillow
-1. Control script handling resharding
+X  Control script handling resharding
 2. Time to move from deployment script to configure/make install

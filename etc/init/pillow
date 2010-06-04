@@ -121,6 +121,24 @@ display_status () {
     $PILLOW -s
 }
 
+reshard_pillow() {
+    # Reshard Pillow to use the new set of databases
+
+    su $PILLOW_USER -c "(cd $RUN_DIR;$PILLOW -m)"
+}
+
+flip_pillow() {
+    # Flip Pillow to use the new set of databases directly after resharding
+
+    su $PILLOW_USER -c "(cd $RUN_DIR;$PILLOW -f)"
+}
+
+reshard_and_flip_pillow() {
+    # Reshard Pillow to use the new set of databases and flip to use them directly
+
+    su $PILLOW_USER -c "(cd $RUN_DIR;$PILLOW -F"
+}
+
 parse_script_option_list () {
     # Parse arguments passed to the script and take appropriate action.
 
@@ -136,6 +154,30 @@ parse_script_option_list () {
         stop)
             log_daemon_msg "Stopping $DESCRIPTION" $NAME
             if stop_pillow; then
+                log_end_msg $SCRIPT_OK
+            else
+                log_end_msg $SCRIPT_ERROR
+            fi
+            ;;
+        reshard)
+            log_daemon_msg "Resharding $DESCRIPTION" $NAME
+            if reshard_pillow; then
+                log_end_msg $SCRIPT_OK
+            else
+                log_end_msg $SCRIPT_ERROR
+            fi
+            ;;
+        flip)
+            log_daemon_msg "Flipping $DESCRIPTION" $NAME
+            if flip_pillow; then
+                log_end_msg $SCRIPT_OK
+            else
+                log_end_msg $SCRIPT_ERROR
+            fi
+            ;;
+        reshard_and_flip)
+            log_daemon_msg "Resharding and flipping $DESCRIPTION" $NAME
+            if reshard_and_flip_pillow; then
                 log_end_msg $SCRIPT_OK
             else
                 log_end_msg $SCRIPT_ERROR
