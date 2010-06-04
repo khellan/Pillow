@@ -16,7 +16,7 @@
 -export([start/0]).
 
 %%--------------------------------------------------------------------
-%% Tests that all modules can be loaded and that functions are exported 
+%% Tests that all modules can be loaded
 %%--------------------------------------------------------------------
 start() ->
     etap:plan(12),
