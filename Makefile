@@ -3,7 +3,6 @@ EBIN_DIRS    := $(wildcard deps/*/ebin)
 APP          := pillow
 
 all: ebin erl ebin/$(APP).app
-all_boot: all make_boot
 
 erl:
 	@$(ERL) -pa $(EBIN_DIRS) -noinput +B \
@@ -15,10 +14,6 @@ docs:
 clean: 
 	@echo "removing:"
 	@rm -fv ebin/*.beam ebin/*.app
-
-make_boot:
-	(cd ebin; erl -pa ebin -noshell \
-	  -run make_boot write_scripts rest_app)
 
 ebin:
 	@mkdir ebin
