@@ -16,7 +16,7 @@ AC_INIT([LOCAL_PACKAGE_NAME], [LOCAL_VERSION], [], [LOCAL_PACKAGE_TARNAME])
 
 AC_PREREQ([2.59])
 
-AC_CONFIG_SRCDIR([CHANGES])
+AC_CONFIG_SRCDIR([README])
 AC_CONFIG_AUX_DIR([build-aux])
 
 AM_CONFIG_HEADER([config.h])
@@ -313,11 +313,15 @@ AC_CONFIG_FILES([Makefile
                  etc/init/Makefile
                  priv/Makefile
                  src/Makefile
-                 test/Makefile])
+                 test/Makefile
+                 bin/pillow.tpl
+                 bin/pillow.bat.tpl
+                 etc/init/pillow.tpl
+                 src/pillow.app.tpl
+                 ])
 
 #AC_CONFIG_FILES([bin/pillow.tpl])
 #AC_CONFIG_FILES([bin/pillow.bat.tpl])
-#AC_CONFIG_FILES([bin/Makefile])
 #AC_CONFIG_FILES([etc/init/pillow.tpl])
 #AC_CONFIG_FILES([src/pillow.app.tpl])
 
