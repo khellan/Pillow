@@ -297,21 +297,29 @@ AC_SUBST(abs_top_builddir)
 
 AC_REVISION([LOCAL_VERSION])
 
-AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([bin/pillow.tpl])
-AC_CONFIG_FILES([bin/pillow.bat.tpl])
-AC_CONFIG_FILES([bin/Makefile])
-AC_CONFIG_FILES([etc/default/Makefile])
-AC_CONFIG_FILES([etc/init/pillow.tpl])
-AC_CONFIG_FILES([etc/init/Makefile])
-AC_CONFIG_FILES([etc/Makefile])
-AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([src/pillow.app.tpl])
-AC_CONFIG_FILES([deps/ibrowse/Makefile])
-AC_CONFIG_FILES([deps/webmachine/Makefile])
-AC_CONFIG_FILES([deps/webmachine/deps/mochiweb/Makefile])
-AC_CONFIG_FILES([deps/etap/Makefile])
-AC_CONFIG_FILES([test/Makefile])
+AC_CONFIG_FILES([Makefile
+                 bin/Makefile
+                 deps/etap/Makefile
+                 deps/ibrowse/Makefile
+                 deps/ibrowse/src/Makefile
+                 deps/webmachine/Makefile
+                 deps/webmachine/deps/mochiweb/Makefile
+                 deps/webmachine/deps/mochiweb/priv/skel/Makefile
+                 deps/webmachine/deps/mochiweb/priv/skel/src/Makefile
+                 deps/webmachine/deps/mochiweb/src/Makefile
+                 deps/webmachine/priv/skel/Makefile
+                 etc/Makefile
+                 etc/default/Makefile
+                 etc/init/Makefile
+                 priv/Makefile
+                 src/Makefile
+                 test/Makefile])
+
+#AC_CONFIG_FILES([bin/pillow.tpl])
+#AC_CONFIG_FILES([bin/pillow.bat.tpl])
+#AC_CONFIG_FILES([bin/Makefile])
+#AC_CONFIG_FILES([etc/init/pillow.tpl])
+#AC_CONFIG_FILES([src/pillow.app.tpl])
 
 AC_OUTPUT
 

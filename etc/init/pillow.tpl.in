@@ -28,9 +28,9 @@ SCRIPT_ERROR=1
 DESCRIPTION="database shard handler"
 NAME=pillow
 SCRIPT_NAME=`basename $0`
-PILLOW=/usr/local/bin/pillow
-CONFIGURATION_FILE=/usr/local/etc/default/pillow
-RUN_DIR=/usr/local/var/run/pillow
+PILLOW=%bindir%/%pillow_command_name%
+CONFIGURATION_FILE=%sysconfdir%/default/pillow
+RUN_DIR=%localstaterundir%
 LSB_LIBRARY=/lib/lsb/init-functions
 
 if test ! -x $PILLOW; then
