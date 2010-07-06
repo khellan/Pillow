@@ -30,6 +30,7 @@ AC_DISABLE_STATIC
 AC_PROG_CC
 AC_PROG_LIBTOOL
 AC_PROG_LN_S
+AC_PROG_MAKE_SET
 
 AC_MSG_CHECKING([for pthread_create in -lpthread])
 
@@ -307,7 +308,8 @@ AC_CONFIG_FILES([etc/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/pillow.app.tpl])
 AC_CONFIG_FILES([deps/ibrowse/Makefile])
-AC_CONFIG_FILES([deps/mochiweb/Makefile])
+AC_CONFIG_FILES([deps/webmachine/Makefile])
+AC_CONFIG_FILES([deps/webmachine/deps/mochiweb/Makefile])
 AC_CONFIG_FILES([deps/etap/Makefile])
 AC_CONFIG_FILES([test/Makefile])
 
