@@ -18,7 +18,7 @@ m4_define([LOCAL_PACKAGE_NAME], [Pillow])
 m4_define([LOCAL_BUG_URI], [http://github.com/khellan/pillow/issues])
 m4_define([LOCAL_VERSION_MAJOR], [0])
 m4_define([LOCAL_VERSION_MINOR], [3])
-m4_define([LOCAL_VERSION_REVISION], [0])
+m4_define([LOCAL_VERSION_REVISION], [1])
 m4_define([LOCAL_VERSION_STAGE], [a])
 m4_define([LOCAL_VERSION_RELEASE], [%release%])
 m4_define([LOCAL_VERSION_PRIMARY],
