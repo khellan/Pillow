@@ -303,9 +303,6 @@ AC_CONFIG_FILES([Makefile
                  deps/ibrowse/Makefile
                  deps/webmachine/Makefile
                  deps/webmachine/deps/mochiweb/Makefile
-                 deps/webmachine/deps/mochiweb/priv/skel/Makefile
-                 deps/webmachine/deps/mochiweb/priv/skel/src/Makefile
-                 deps/webmachine/deps/mochiweb/src/Makefile
                  deps/webmachine/priv/skel/Makefile
                  etc/Makefile
                  etc/default/Makefile
