@@ -13,7 +13,7 @@
 ibrowseebindir = $(localerlanglibdir)/ibrowse/ebin
 
 ibrowse_file_collection = \
-    ibrowse_app.in \
+    ibrowse.app.in \
     ibrowse_app.erl \
     ibrowse.erl \
     ibrowse_http_client.erl \
@@ -23,14 +23,14 @@ ibrowse_file_collection = \
     ibrowse_test.erl
 
 ibrowseebin_make_generated_file_list = \
-    ibrowse_app \
-    ibrowse_app.erl \
-    ibrowse.erl \
-    ibrowse_http_client.erl \
-    ibrowse_lb.erl \
-    ibrowse_lib.erl \
-    ibrowse_sup.erl \
-    ibrowse_test.erl
+    ibrowse.app \
+    ibrowse_app.beam \
+    ibrowse.beam \
+    ibrowse_http_client.beam \
+    ibrowse_lb.beam \
+    ibrowse_lib.beam \
+    ibrowse_sup.beam \
+    ibrowse_test.beam
 
 ibrowseebin_DATA = $(ibrowseebin_make_generated_file_list)
 

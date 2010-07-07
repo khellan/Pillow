@@ -34,23 +34,23 @@ webmachine_file_collection = \
 
 webmachineebin_make_generated_file_list = \
     webmachine.app \
-    webmachine_app.erl \
-    webmachine_decision_core.erl \
-    webmachine_deps.erl \
-    webmachine_dispatcher.erl \
-    webmachine.erl \
-    webmachine_error_handler.erl \
-    webmachine_logger.erl \
-    webmachine_mochiweb.erl \
-    webmachine_multipart.erl \
-    webmachine_perf_logger.erl \
-    webmachine_request.erl \
-    webmachine_resource.erl \
-    webmachine_skel.erl \
-    webmachine_sup.erl \
-    webmachine_util.erl \
-    wmtrace_resource.erl \
-    wrq.erl
+    webmachine_app.beam \
+    webmachine_decision_core.beam \
+    webmachine_deps.beam \
+    webmachine_dispatcher.beam \
+    webmachine.beam \
+    webmachine_error_handler.beam \
+    webmachine_logger.beam \
+    webmachine_mochiweb.beam \
+    webmachine_multipart.beam \
+    webmachine_perf_logger.beam \
+    webmachine_request.beam \
+    webmachine_resource.beam \
+    webmachine_skel.beam \
+    webmachine_sup.beam \
+    webmachine_util.beam \
+    wmtrace_resource.beam \
+    wrq.beam
 
 webmachineebin_DATA = $(webmachineebin_make_generated_file_list)
 
