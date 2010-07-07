@@ -10,6 +10,8 @@
 ## License for the specific language governing permissions and limitations under
 ## the License.
 
+ACLOCAL_AMFLAGS = -I m4
+
 SUBDIRS = bin etc src deps priv test
 
 localdoc_DATA = \

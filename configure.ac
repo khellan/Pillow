@@ -10,8 +10,6 @@ dnl WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 dnl License for the specific language governing permissions and limitations
 dnl under the License.
 
-m4_include([m4/ac_check_icu.m4])
-
 AC_INIT([LOCAL_PACKAGE_NAME], [LOCAL_VERSION], [], [LOCAL_PACKAGE_TARNAME])
 
 AC_PREREQ([2.59])
@@ -299,6 +297,7 @@ AC_REVISION([LOCAL_VERSION])
 
 AC_CONFIG_FILES([Makefile
                  bin/Makefile
+                 deps/Makefile
                  deps/etap/Makefile
                  deps/ibrowse/Makefile
                  deps/webmachine/Makefile
