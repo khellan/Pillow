@@ -40,7 +40,7 @@ EXTRA_DIST =  $(ibrowse_file_collection) \
 CLEANFILES = $(ibrowseebin_make_generated_file_list)
 
 %.app: %.app.in
-    cp $< $@
+	cp $< $@
 
 
 %.beam: %.erl

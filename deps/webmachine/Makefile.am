@@ -63,7 +63,7 @@ EXTRA_DIST =  $(webmachine_file_collection) \
 CLEANFILES = $(webmachineebin_make_generated_file_list)
 
 %.app: %.app.in
-    cp $< $@
+	cp $< $@
 
 
 %.beam: %.erl
