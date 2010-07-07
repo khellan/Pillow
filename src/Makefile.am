@@ -61,26 +61,26 @@ compiled_files = \
 
 if WINDOWS
 pillow.app: pillow.app.tpl
-        modules=`find . -name "pillow*.erl" -exec basename {} .erl \; | tr '\n' ',' | sed "s/,$$//"`; \
-        sed -e "s|%package_name%|@package_name@|g" \
-            -e "s|%version%|@version@|g" \
-            -e "s|@modules@|$$modules|g" \
-            -e "s|%localconfdir%|../etc/pillow|g" \
-            -e "s|@defaultini@|default.ini|g" \
-            -e "s|@localini@|local.ini|g" > \
-        $@ < $<
+	modules=`find . -name "pillow*.erl" -exec basename {} .erl \; | tr '\n' ',' | sed "s/,$$//"`; \
+	sed -e "s|%package_name%|@package_name@|g" \
+	    -e "s|%version%|@version@|g" \
+	    -e "s|@modules@|$$modules|g" \
+	    -e "s|%localconfdir%|../etc/pillow|g" \
+	    -e "s|@defaultini@|default.ini|g" \
+	    -e "s|@localini@|local.ini|g" > \
+	$@ < $<
 else
 pillow.app: pillow.app.tpl
-        modules=`find . -name "*.erl" -exec basename {} .erl \; | tr '\n' ',' | sed "s/,$$//"`; \
-        sed -e "s|%package_name%|@package_name@|g" \
-            -e "s|%version%|@version@|g" \
-            -e "s|@modules@|$$modules|g" \
-            -e "s|%localconfdir%|@localconfdir@|g" \
-            -e "s|@defaultini@|default.ini|g" \
-            -e "s|@localini@|local.ini|g" > \
-        $@ < $<
-        chmod +x $@
+	modules=`find . -name "*.erl" -exec basename {} .erl \; | tr '\n' ',' | sed "s/,$$//"`; \
+	sed -e "s|%package_name%|@package_name@|g" \
+	    -e "s|%version%|@version@|g" \
+	    -e "s|@modules@|$$modules|g" \
+	    -e "s|%localconfdir%|@localconfdir@|g" \
+	    -e "s|@defaultini@|default.ini|g" \
+	    -e "s|@localini@|local.ini|g" > \
+	$@ < $<
+	chmod +x $@
 endif
 
 %.beam: %.erl couch_db.hrl
-        $(ERLC) $(ERLC_FLAGS) ${TEST} $<;
+	$(ERLC) $(ERLC_FLAGS) ${TEST} $<;

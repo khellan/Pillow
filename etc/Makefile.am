@@ -23,19 +23,19 @@ transform = @program_transform_name@
 pillow_command_name = `echo pillow | sed '$(transform)'`
 
 init/pillow: init/pillow.tpl
-        if test "$(mkdir_p)"; then \
-            $(mkdir_p) init; \
-        else \
-            if test ! -d init; then \
-                mkdir init; \
-            fi \
-        fi
-        sed -e "s|%configure_input%|$@. Generated from $< by configure.|" \
-            -e "s|%bindir%|$(bindir)|" \
-            -e "s|%sysconfdir%|$(sysconfdir)|" \
-            -e "s|%localstaterundir%|$(localstaterundir)|" \
-            -e "s|%pillow_command_name%|$(pillow_command_name)|" \
-        < $< > $@
+	if test "$(mkdir_p)"; then \
+	    $(mkdir_p) init; \
+	else \
+	    if test ! -d init; then \
+	        mkdir init; \
+	    fi \
+	fi
+	sed -e "s|%configure_input%|$@. Generated from $< by configure.|" \
+	    -e "s|%bindir%|$(bindir)|" \
+	    -e "s|%sysconfdir%|$(sysconfdir)|" \
+	    -e "s|%localstaterundir%|$(localstaterundir)|" \
+	    -e "s|%pillow_command_name%|$(pillow_command_name)|" \
+	< $< > $@
 
 if WINDOWS
 
@@ -45,38 +45,38 @@ if WINDOWS
 # changes the version string in the generated files) so we trick make
 # into always building it with the FORCE pattern...
 windows/README.txt: windows/README.txt.tpl FORCE
-        sed -e "s|%package_name%|@package_name@|g" \
-            -e "s|%version%|@version@|g" \
-        < $< | unix2dos > $@
+	sed -e "s|%package_name%|@package_name@|g" \
+	    -e "s|%version%|@version@|g" \
+	< $< | unix2dos > $@
 
 windows/pillow.iss: windows/pillow.iss.tpl FORCE
-        sed -e "s|%configure_input%|$@. Generated from $< by configure.|" \
-            -e "s|%package_name%|@package_name@|g" \
-            -e "s|%locallibbindir%|`cygpath -m @locallibbindir@`|g" \
-            -e "s|%version%|@version@|g" \
-            -e "s|%erts_version%|`$(ERL) -version 2>&1 | $(SED) 's/[^0-9\.]//g'`|g" \
-            -e "s|%openssl_bin_dir%|@openssl_bin_dir@|g" \
-            -e "s|%msvc_redist_dir%|@msvc_redist_dir@|g" \
-            -e "s|%msvc_redist_name%|@msvc_redist_name@|g" \
-        < $< > $@
+	sed -e "s|%configure_input%|$@. Generated from $< by configure.|" \
+	    -e "s|%package_name%|@package_name@|g" \
+	    -e "s|%locallibbindir%|`cygpath -m @locallibbindir@`|g" \
+	    -e "s|%version%|@version@|g" \
+	    -e "s|%erts_version%|`$(ERL) -version 2>&1 | $(SED) 's/[^0-9\.]//g'`|g" \
+	    -e "s|%openssl_bin_dir%|@openssl_bin_dir@|g" \
+	    -e "s|%msvc_redist_dir%|@msvc_redist_dir@|g" \
+	    -e "s|%msvc_redist_name%|@msvc_redist_name@|g" \
+	< $< > $@
 
 # The installer depends on all files, not just the source .iss file,
 # so we trick make into always building it with the FORCE pattern...
 windows/setup-pillow-@version@.exe: windows/pillow.iss windows/README.txt FORCE
-        "$(INNO_COMPILER_EXECUTABLE)" /q $<
-        @echo Windows Installer is at: `cygpath -a -w windows/setup-pillow-@version@.exe`
+	"$(INNO_COMPILER_EXECUTABLE)" /q $<
+	@echo Windows Installer is at: `cygpath -a -w windows/setup-pillow-@version@.exe`
 
 windows/setup-pillow-@version@.exe.md5: windows/setup-pillow-@version@.exe
-        cd windows && md5sum ./$(<F) > $(@F)
+	cd windows && md5sum ./$(<F) > $(@F)
 
 windows/setup-pillow-@version@.exe.sha: windows/setup-pillow-@version@.exe
-        cd windows && sha1sum ./$(<F) > $(@F)
+	cd windows && sha1sum ./$(<F) > $(@F)
 
 FORCE:
 
 endif
 
 install-data-hook:
-        if test -n "$(init_DATA)"; then \
-            chmod +x "$(DESTDIR)$(initdir)/pillow"; \
-        fi
+	if test -n "$(init_DATA)"; then \
+	    chmod +x "$(DESTDIR)$(initdir)/pillow"; \
+	fi
