@@ -13,14 +13,14 @@
 # the License.
 
 BACKGROUND=false
-DEFAULT_CONFIG_DIR=%localconfigdir%/default.d
-DEFAULT_CONFIG_FILE=%localconfigdir%/%defaultini%
+DEFAULT_CONFIG_DIR=%localconfdir%/default.d
+DEFAULT_CONFIG_FILE=%localconfdir%/%defaultini%
 HEART_BEAT_TIMEOUT=11
 HEART_COMMAND="%bindir%/%pillow_command_name% -k"
 INTERACTIVE=false
 KILL=false
-LOCAL_CONFIG_DIR=%localconfigdir%/local.d
-LOCAL_CONFIG_FILE=%localconfigdir%/%local_ini%
+LOCAL_CONFIG_DIR=%localconfdir%/local.d
+LOCAL_CONFIG_FILE=%localconfdir%/%local_ini%
 PID_FILE=%localstatedir%/run/pillow/pillow.pid
 RECURSED=false
 RESET_CONFIG=true
