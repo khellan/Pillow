@@ -34,7 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = deps/webmachine/deps/mochiweb
+subdir = deps/mochiweb
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_curl.m4 \
@@ -105,7 +105,10 @@ FGREP = @FGREP@
 FLAGS = @FLAGS@
 GREP = @GREP@
 HELP2MAN_EXECUTABLE = @HELP2MAN_EXECUTABLE@
+ICU_CFLAGS = @ICU_CFLAGS@
 ICU_CONFIG = @ICU_CONFIG@
+ICU_CXXFLAGS = @ICU_CXXFLAGS@
+ICU_LIBS = @ICU_LIBS@
 ICU_LOCAL_BIN = @ICU_LOCAL_BIN@
 ICU_LOCAL_CFLAGS = @ICU_LOCAL_CFLAGS@
 ICU_LOCAL_LDFLAGS = @ICU_LOCAL_LDFLAGS@
@@ -297,9 +300,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign deps/webmachine/deps/mochiweb/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign deps/mochiweb/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign deps/webmachine/deps/mochiweb/Makefile
+	  $(AUTOMAKE) --foreign deps/mochiweb/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
