@@ -25,22 +25,22 @@ EXTRA_DIST = \
     README
 
 INSTALL.gz: $(top_srcdir)/INSTALL
-        -gzip -9 < $< > $@
+	-gzip -9 < $< > $@
 
 LICENSE.gz: $(top_srcdir)/LICENSE
-        -gzip -9 < $< > $@
+	-gzip -9 < $< > $@
 
 README.gz: $(top_srcdir)/README
-        -gzip -9 < $< > $@
+	-gzip -9 < $< > $@
 
 check: dev
-        $(top_builddir)/test/run
+	$(top_builddir)/test/run
 
 cover: dev
-        rm -f cover/*.coverdata
-        COVER=1 COVER_BIN=./src/ $(top_builddir)/test/run
-        SRC=./src/ \
-            $(ERL) -noshell \
-                -pa deps/etap \
-                -eval 'etap_report:create()' \
-            -s init stop > /dev/null 2>&1
+	rm -f cover/*.coverdata
+	COVER=1 COVER_BIN=./src/ $(top_builddir)/test/run
+	SRC=./src/ \
+	    $(ERL) -noshell \
+		-pa deps/etap \
+		-eval 'etap_report:create()' \
+	    -s init stop > /dev/null 2>&1
