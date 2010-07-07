@@ -312,6 +312,7 @@ AC_CONFIG_FILES([Makefile
                  bin/pillow.bat.tpl
                  etc/init/pillow.tpl
                  src/pillow.app.tpl
+                 test/test_util.erl
                  ])
 
 #AC_CONFIG_FILES([bin/pillow.tpl])

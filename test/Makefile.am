@@ -11,21 +11,21 @@
 ## the License.
 
 noinst_SCRIPTS = run
-
-%.beam: %.erl
-        $(ERLC) $<
-
-run: run.tpl
-        sed -e "s|%abs_top_srcdir%|@abs_top_srcdir@|g" \
-            -e "s|%abs_top_builddir%|@abs_top_builddir@|g" > \
-        $@ < $<
-        chmod +x $@
+noinst_DATA = test_util.beam
 
 CLEANFILES = run *.beam
 DISTCLEANFILES = temp.*
 
 EXTRA_DIST = \
-    run.tpl \
-    etap_t_001.erl \
-    etap_t_002.erl \
-    etap_t_003.erl
+    001-load-modules.t \
+    002-pillow-t \
+    003-pillow-couch.t
+
+%.beam: %.erl
+	$(ERLC) $<;
+
+run: run.tpl
+	sed -e "s|%abs_top_srcdir%|@abs_top_srcdir@|g" \
+	    -e "s|%abs_top_builddir%|@abs_top_builddir@|g" > \
+	$@ < $<
+	chmod +x $@

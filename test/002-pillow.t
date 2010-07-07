@@ -1,3 +1,4 @@
+#!/usr/bin/env escript
 %%%---------------------------------------------------------------------
 %%% Licensed under the Apache License, Version 2.0 (the "License"); you may not
 %%% use this file except in compliance with the License. You may obtain a copy of
@@ -12,13 +13,11 @@
 %%% the License.
 %%%---------------------------------------------------------------------
 
--module(etap_t_002).
--export([start/0]).
-
 %%--------------------------------------------------------------------
 %% Tests the pillow module
 %%--------------------------------------------------------------------
-start() ->
+main(_)->
+    test_util:init_code_path(),
     etap:plan(1),
     etap:is_greater(length(string:tokens(pillow:get_version(), ".")), 1, "The version number is a string with at least one dot"),
     etap:end_tests().

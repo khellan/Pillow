@@ -1,3 +1,4 @@
+#!/usr/bin/env escript
 %%%---------------------------------------------------------------------
 %%% Licensed under the Apache License, Version 2.0 (the "License"); you may not
 %%% use this file except in compliance with the License. You may obtain a copy of
@@ -12,16 +13,14 @@
 %%% the License.
 %%%---------------------------------------------------------------------
 
--module(etap_t_003).
--export([start/0]).
-
--include("etap.hrl").
+-include_lib("test/etap.hrl").
 
 %%--------------------------------------------------------------------
 %% Tests the pillow_couch module
 %%--------------------------------------------------------------------
-start() ->
-    etap:plan(12),
+main(_)->
+    test_util:init_code_path(),
+    etap:plan(11),
     test_content_types_provided(),
     test_content_types_accepted(),
     test_allowed_methods(),

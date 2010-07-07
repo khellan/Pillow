@@ -15,7 +15,7 @@
 SRCDIR="%abs_top_srcdir%"
 BUILDIR="%abs_top_builddir%"
 
-export ERL_FLAGS="$ERL_FLAGS -pa $BUILDIR/test/etap/"
+export ERL_FLAGS="$ERL_FLAGS -pa $BUILDIR/test/"
 
 if test $# -gt 0; then
     while [ $# -gt 0 ]; do
@@ -23,5 +23,5 @@ if test $# -gt 0; then
         shift
     done
 else
-    prove $SRCDIR/test/etap/*.t
+    prove $SRCDIR/test/*.t
 fi
