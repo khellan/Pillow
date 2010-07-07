@@ -13,14 +13,19 @@
 SUBDIRS = bin etc src deps priv test
 
 localdoc_DATA = \
+    INSTALL.gz \
     LICENSE.gz \
     README.gz
 
 DISTCLEANFILES = $(localdoc_DATA)
 
 EXTRA_DIST = \
+    INSTALL \
     LICENSE \
     README
+
+INSTALL.gz: $(top_srcdir)/INSTALL
+        -gzip -9 < $< > $@
 
 LICENSE.gz: $(top_srcdir)/LICENSE
         -gzip -9 < $< > $@
