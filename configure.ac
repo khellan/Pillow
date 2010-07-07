@@ -302,7 +302,7 @@ AC_CONFIG_FILES([Makefile
                  deps/etap/Makefile
                  deps/ibrowse/Makefile
                  deps/webmachine/Makefile
-                 deps/webmachine/deps/mochiweb/Makefile
+                 deps/mochiweb/Makefile
                  etc/Makefile
                  etc/default/Makefile
                  etc/init/Makefile
