@@ -1,8 +1,10 @@
 Pillow is a combined router and rereducer for CouchDB.
 
-Dependencies (Both of these are included in this git repository):
+Dependencies (All of these are included in this git repository):
 - webmachine
 - ibrowse from jungerl
+- etap (for testing)
+- mochiweb (for webmachine)
 
 Needless to say, it also depends indirectly on couchdb. There is no direct dependencies, but what use is a router
 or rereducer for CouchDB without CouchDB. 
@@ -24,4 +26,12 @@ X  End-to-end resharding through a single call. Pillow will wait until replicati
 X  control script
 X  Daemonize Pillow
 X  Control script handling resharding
-2. Time to move from deployment script to configure/make install
+X  Time to move from deployment script to configure/make install
+
+No clear prioritized list right now, but these are interesting features that would be beneficial:
+- Consistent hashing (http://en.wikipedia.org/wiki/Consistent_hashing) to increase control over resharding
+- CouchDB view server for JavaScript rereducers
+- Support Bulk document API
+- Support CouchApp API
+- Manage replication to mirror servers making Pillow automatically set up n-server master-master replication for each
+  shard
