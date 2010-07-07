@@ -10,14 +10,12 @@
 ## License for the specific language governing permissions and limitations under
 ## the License.
 
-SUBDIRS = priv
-
 pillowlibdir = $(localerlanglibdir)/pillow-$(version)
 pillowincludedir = $(pillowlibdir)/include
 pillowebindir = $(pillowlibdir)/ebin
 
 pillowinclude_DATA = couch_db.hrl
-pillowbin_DATA = $(compiled_files)
+pillowebin_DATA = $(compiled_files)
 
 # dist_devdoc_DATA = $(doc_base) $(doc_modules)
 
