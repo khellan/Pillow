@@ -13,24 +13,9 @@
 %%%---------------------------------------------------------------------
 
 {application, pillow, [
-  {description, "Pillow, the CouchDB router and rereducer"},
-  {vsn, "0.3"},
-  {modules, [
-    couch_config,
-    couch_config_writer,
-    couch_util,
-    pillow,
-    pillow_app,
-    pillow_couch,
-    pillow_monitor,
-    pillow_sup,
-    pillow_routing_table,
-    pillow_router,
-    pillow_reducer,
-    pillow_status,
-    pillow_util,
-    reducers,
-    static_resource]},
+  {description, "@package_name@"},
+  {vsn, "@version@"},
+  {modules, [@modules@]},
   {registered, [
     couch_config,
     pillow_monitor,
@@ -39,6 +24,7 @@
   {applications, [kernel, stdlib, crypto]},
   {env, []},
   {mod, {pillow_app, [
-    "./etc/pillow.ini"
+    "%localconfdir%/@defaultini@",
+    "%localconfdir%/@localini@"
   ]}}
 ]}.
