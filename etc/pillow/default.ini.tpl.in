@@ -3,7 +3,7 @@
 [pillow]
 port = 8000
 databases = test
-document_root = priv/
+document_root = %localdatadir%
 view_timeout = 30000
 
 [routing]

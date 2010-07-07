@@ -10,7 +10,7 @@
 ## License for the specific language governing permissions and limitations under
 ## the License.
 
-SUBDIRS = default init
+SUBDIRS = default init pillow
 
 if INIT
 init_sysconf_data = default/pillow

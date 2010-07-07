@@ -305,12 +305,14 @@ AC_CONFIG_FILES([Makefile
                  etc/Makefile
                  etc/default/Makefile
                  etc/init/Makefile
+                 etc/pillow/Makefile
                  priv/Makefile
                  src/Makefile
                  test/Makefile
                  bin/pillow.tpl
                  bin/pillow.bat.tpl
                  etc/init/pillow.tpl
+                 etc/pillow/default.ini.tpl
                  src/pillow.app.tpl
                  test/test_util.erl
                  ])
