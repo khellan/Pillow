@@ -1,0 +1,205 @@
+Apache CouchDB README.Unix
+==========================
+
+A high-level guide to Unix-like systems, inc. Mac OS X and Ubuntu.
+
+Dependencies
+------------
+
+You will need the following installed:
+
+ * Erlang OTP (>=R12B5)       (http://erlang.org/)
+ * ICU                        (http://icu.sourceforge.net/)
+ * OpenSSL                    (http://www.openssl.org/)
+ * libcurl                    (http://curl.haxx.se/libcurl/)
+ * GNU Make                   (http://www.gnu.org/software/make/)
+ * GNU Compiler Collection    (http://gcc.gnu.org/)
+ * EUnit                      (http://svn.process-one.net/contribs/trunk/eunit/doc/overview-summary.html)
+
+It is recommended that you install Erlang OTP R12B-5 or above where possible.
+
+Debian-based (inc. Ubuntu) Systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can install the build tools by running:
+
+    sudo apt-get install build-essential
+
+You can install the other dependencies by running:
+
+    sudo apt-get install erlang libicu-dev libcurl4-openssl-dev erlang-eunit
+
+Be sure to update the version numbers to match your system's available packages.
+
+Mac OS X
+~~~~~~~~
+
+You can install the build tools by running:
+
+    open /Applications/Installers/Xcode\ Tools/XcodeTools.mpkg
+
+You can install the other dependencies by running:
+
+    sudo port install icu erlang curl
+
+You will need MacPorts installed to use the `port` command.
+
+(Not entirely sure how to install eunit, but it could be available from MacPorts)
+
+Installing
+----------
+
+Once you have satisfied the dependencies you should run:
+
+    ./configure
+
+This script will configure Pillow to be installed into `/usr/local` by default.
+
+If you wish to customise the installation, pass `--help` to this script.
+
+If everything was successful you should see the following message:
+
+    You have configured Pillow, time to get comfy.
+
+
+
+To install Pillow you should run:
+
+    make && sudo make install
+
+You only need to use `sudo` if you're installing into a system directory.
+
+Try `gmake` if `make` is giving you any problems.
+
+If everything was successful you should see the following message:
+
+    You have installed Pillow, time to get comfy.
+
+
+
+First Run
+---------
+
+You can start the Pillow server by running:
+
+    sudo -i -u couchdb pillow
+
+This uses the `sudo` command to run the `pillow` command as the `couchdb` user.
+
+When Pillow starts it should eventually display the following message:
+
+    Pillow has started, time to get comfy.
+
+Relax.
+
+To check that everything has worked, point your web browser to:
+
+    http://localhost:8000/
+
+This should show you a default status. Edit your Pillow configuration to point to your CouchDB's
+
+    (vi|emacs|gedit) /usr/local/etc/pillow/local.ini
+
+Security Considerations
+-----------------------
+
+You should create a special `couchdb` user for Pillow unless you have already created one for Apache CouchDB.
+
+On many Unix-like systems you can run:
+
+    mkdir -p /usr/local/var/lib/couchdb
+    adduser --system \
+            --home /usr/local/var/lib/couchdb \
+            --no-create-home \
+            --shell /bin/bash \
+            --group --gecos \
+            "CouchDB Administrator" couchdb
+
+On Mac OS X you can use the Workgroup Manager to create users:
+
+  http://www.apple.com/support/downloads/serveradmintools1047.html
+
+You must make sure that:
+
+    * The user has a working POSIX shell
+
+    * The user's home directory is `/usr/local/var/lib/couchdb`
+
+You can test this by:
+
+    * Trying to log in as the `couchdb` user
+
+    * Running `pwd` and checking the present working directory
+
+Change the ownership of the CouchDB directories by running:
+
+    chown -R couchdb:couchdb /usr/local/etc/pillow
+    chown -R couchdb:couchdb /usr/local/var/run/pillow
+
+Change the permission of the CouchDB directories by running:
+
+    chmod 0770 /usr/local/etc/pillow
+    chmod 0770 /usr/local/var/run/pillow
+
+Running as a Daemon
+-------------------
+
+SysV/BSD-style Systems
+~~~~~~~~~~~~~~~~~~~~~~
+
+You can use the `pillow` init script to control the Pillow daemon.
+
+On SysV-style systems, the init script will be installed into:
+
+    /usr/local/etc/init.d
+
+On BSD-style systems, the init script will be installed into:
+
+    /usr/local/etc/rc.d
+
+We use the `[init.d|rc.d]` notation to refer to both of these directories.
+
+You can control the Pillow daemon by running:
+
+    /usr/local/etc/[init.d|rc.d]/pillow [start|stop|restart|status]
+
+If you wish to configure how the init script works, you can edit:
+
+    /usr/local/etc/default/pillow
+
+Comment out the `COUCHDB_USER` setting if you're running as a non-superuser.
+
+To start the daemon on boot, copy the init script to:
+
+    /etc/[init.d|rc.d]
+
+You should then configure your system to run the init script automatically.
+
+You may be able to run:
+
+    sudo update-rc.d pillow defaults
+
+If this fails, consult your system documentation for more information.
+
+Control resharding:
+Edit your Pillow configuration to so that the resharding routing_table specifies your new CouchDB servers
+
+    (vi|emacs|gedit) /usr/local/etc/pillow/local.ini
+
+    /etc/init.d/pillow reshard
+
+Watch the server status at
+
+    http://localhost:8000/
+
+It switches from ok to resharding after you issue the reshard command. When it switches to ready, you can either
+configure your backup servers and replication to them if you haven't done so or flip to use the new servers with:
+
+    /etc/init.d/pillow flip
+
+Enjoy and as the Apache CouchDB team and CouchDB itself would say, Relax!
+
+Mac OS X
+~~~~~~~~
+
+I haven't tested this for Mac OS

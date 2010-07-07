@@ -16,6 +16,7 @@ SUBDIRS = bin etc src deps priv test
 
 localdoc_DATA = \
     INSTALL.gz \
+    INSTALL.Unix.gz \
     LICENSE.gz \
     README.gz
 
@@ -23,10 +24,14 @@ DISTCLEANFILES = $(localdoc_DATA)
 
 EXTRA_DIST = \
     INSTALL \
+    INSTALL.Unix \
     LICENSE \
     README
 
 INSTALL.gz: $(top_srcdir)/INSTALL
+	-gzip -9 < $< > $@
+
+INSTALL.Unix.gz: $(top_srcdir)/INSTALL.Unix
 	-gzip -9 < $< > $@
 
 LICENSE.gz: $(top_srcdir)/LICENSE
@@ -46,3 +51,8 @@ cover: dev
 		-pa deps/etap \
 		-eval 'etap_report:create()' \
 	    -s init stop > /dev/null 2>&1
+
+install-data-hook:
+	@echo
+	@echo "You have installed Pillow, time to get comfy."
+
