@@ -6,7 +6,7 @@
 -export([init/1, allowed_methods/2,
          content_types_provided/2, resource_exists/2, last_modified/2, provide_content/2]).
 
--include_lib("webmachine/include/webmachine.hrl").
+-include("../deps/webmachine/webmachine.hrl").
 -include_lib("kernel/include/file.hrl").
 -record(context, {docroot,fullpath,fileinfo}).
 

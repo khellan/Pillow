@@ -17,7 +17,7 @@
 -export([init/1, to_json/2, content_types_provided/2, content_types_accepted/2]).
 -export([allowed_methods/2, receive_data/2, delete_resource/2, process_post/2]).
 
--include_lib("deps/webmachine/include/webmachine.hrl").
+-include("../deps/webmachine/webmachine.hrl").
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS

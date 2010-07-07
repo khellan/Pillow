@@ -16,7 +16,7 @@
 
 -export([init/1, to_json/2, to_html/2]).
 
--include_lib("deps/webmachine/include/webmachine.hrl").
+-include("../deps/webmachine/webmachine.hrl").
 
 %%--------------------------------------------------------------------
 %% EXPORTED FUNCTIONS
