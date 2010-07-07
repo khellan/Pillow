@@ -59,8 +59,8 @@ index(Modules) ->
                     CovPer = round((Good / (Good + Bad)) * 100),
                     UnCovPer = round((Bad / (Good + Bad)) * 100),
                     RowClass = case LastRow of 1 -> "odd"; _ -> "even" end,
-                    io:format(IndexFD, "<div class=\"~s\">", [RowClass]),
-                    io:format(IndexFD, "<a href=\"~s\">~s</a>", [atom_to_list(Module) ++ "_report.html", atom_to_list(Module)]),
+                    io:format(IndexFD, "<table width='100%' class=\"~s\">", [RowClass]),
+                    io:format(IndexFD, "<tr><td><a href=\"~s\">~s</a><td>", [atom_to_list(Module) ++ "_report.html", atom_to_list(Module)]),
                     io:format(IndexFD, "
                     <table cellspacing='0' cellpadding='0' align='right'>
                       <tr>
@@ -70,9 +70,9 @@ index(Modules) ->
                           </table>
                         </td>
                       </tr>
-                    </table>
+                    </table></td></tr>~n~n
                     ", [CovPer, CovPer, UnCovPer]),
-                    io:format(IndexFD, "</div>", []),
+                    io:format(IndexFD, "</table>", []),
                     case LastRow of
                         1 -> 0;
                         0 -> 1
@@ -80,7 +80,7 @@ index(Modules) ->
             end
         end,
         0,
-        lists:sort(Modules)
+        Modules
     ),
     {TotalGood, TotalBad} = lists:foldl(
         fun({_, {Good, Bad, Source}}, {TGood, TBad}) ->
@@ -95,9 +95,9 @@ index(Modules) ->
         _ ->
             TotalCovPer = round((TotalGood / (TotalGood + TotalBad)) * 100),
             TotalUnCovPer = round((TotalBad / (TotalGood + TotalBad)) * 100),
-            io:format(IndexFD, "<div>", []),
-            io:format(IndexFD, "Total 
-            <table cellspacing='0' cellpadding='0' align='right'>
+            io:format(IndexFD, "<table width='100%'><tr>", []),
+            io:format(IndexFD, "<td>Total</td> 
+            <td><table cellspacing='0' cellpadding='0' align='right'>
               <tr>
                 <td><tt>~p%</tt>&nbsp;</td><td>
                   <table cellspacing='0' class='percent_graph' cellpadding='0' width='100'>
@@ -105,9 +105,9 @@ index(Modules) ->
                   </table>
                 </td>
               </tr>
-            </table>
+            </table></td></tr>~n~n
             ", [TotalCovPer, TotalCovPer, TotalUnCovPer]),
-            io:format(IndexFD, "</div>", [])
+            io:format(IndexFD, "</table>", [])
     end,
     io:format(IndexFD, "</body></html>", []),
     file:close(IndexFD),
@@ -117,9 +117,10 @@ index(Modules) ->
 file_report(Module) ->
     {ok, Data} = cover:analyse(Module, calls, line),
     Source = find_source(Module),
+    io:format("Generating coverage report for ~p (source: ~p)~n", [Module, Source]),
     {Good, Bad} = collect_coverage(Data, {0, 0}),
     case {Source, Good + Bad} of
-        {none, _} -> ok;
+        {none, _} -> io:format("Warning: Couldn't locate source file for ~p.~n", [Module]), ok;
         {_, 0} -> ok;
         _ ->
             {ok, SourceFD} = file:open(Source, [read]),
@@ -183,22 +184,55 @@ datas_match(Data, _) -> {false, Data}.
 
 %% @private
 find_source(Module) when is_atom(Module) ->
-    Root = filename:rootname(Module),
-    Dir = filename:dirname(Root),
-    XDir = case os:getenv("SRC") of false -> "src"; X -> X end,
-    find_source([
-        filename:join([Dir, Root ++ ".erl"]),
-        filename:join([Dir, "..", "src", Root ++ ".erl"]),
-        filename:join([Dir, "src", Root ++ ".erl"]),
-        filename:join([Dir, "elibs", Root ++ ".erl"]),
-        filename:join([Dir, "..", "elibs", Root ++ ".erl"]),
-        filename:join([Dir, XDir, Root ++ ".erl"])
-    ]);
-find_source([]) -> none;
-find_source([Test | Tests]) ->
+    Filename = atom_to_list(Module) ++ ".erl",
+    case code:where_is_file(Filename) of
+        non_existing -> search_for_file(Filename);
+        Absname -> Absname
+    end.
+
+search_for_file(Filename) ->
+    SrcDir = case os:getenv("SRC") of false -> []; X -> [X] end,
+    search_for_file(Filename,
+                    SrcDir ++
+                    ["src",
+                     "elibs",
+                     filename:join(["..", "src"]),
+                     filename:join(["..", "elibs"]),
+                     "."]).
+search_for_file(_Filename, []) ->
+    none;
+search_for_file(Filename, [Dir|Dirs]) ->
+    case search_subdirs(Dir, Filename, 0) of
+        none -> search_for_file(Dirs);
+        Match -> Match
+    end.
+
+search_subdirs(Dir, Filename, 0) ->
+    Test = filename:join([Dir, Filename]),
     case filelib:is_file(Test) of
         true -> Test;
-        false -> find_source(Tests)
+        false -> search_subdirs(Dir, Filename, 1)
+    end;
+search_subdirs(Dir, Filename, 1) ->
+    Test = filename:join([Dir, "*", Filename]),
+    case filelib:wildcard(Test) of
+        [] -> search_subdirs(Dir, Filename, 2);
+        [Match] -> Match;
+        Other -> {search_error, Other}
+    end;
+search_subdirs(Dir, Filename, 2) ->
+    Test = filename:join([Dir, "*", "*", Filename]),
+    case filelib:wildcard(Test) of
+        [] -> search_subdirs(Dir, Filename, 2);
+        [Match] -> Match;
+        Other -> {search_error, Other}
+    end;
+search_subdirs(Dir, Filename, 3) ->
+    Test = filename:join([Dir, "*", "*", "*", Filename]),
+    case filelib:wildcard(Test) of
+        [] -> none;
+        [Match] -> Match;
+        Other -> {search_error, Other}
     end.
 
 %% @private

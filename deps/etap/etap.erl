@@ -46,10 +46,11 @@
 -module(etap).
 -export([
     ensure_test_server/0, start_etap_server/0, test_server/1,
-    diag/1, diag/2, plan/1, end_tests/0, not_ok/2, ok/2, is/3, isnt/3,
-    any/3, none/3, fun_is/3, is_greater/3, skip/1, skip/2,
+    msg/1, msg/2, diag/1, diag/2, expectation_mismatch_message/3,
+    plan/1, end_tests/0, not_ok/2, ok/2, is_ok/2, is/3, isnt/3, any/3, none/3,
+    fun_is/3, expect_fun/3, expect_fun/4, is_greater/3, skip/1, skip/2,
     ensure_coverage_starts/0, ensure_coverage_ends/0, coverage_report/0,
-    datetime/1, skip/3, bail/0, bail/1
+    datetime/1, skip/3, bail/0, bail/1, test_state/0, failure_count/0
 ]).
 -record(test_state, {planned = 0, count = 0, pass = 0, fail = 0, skip = 0, skip_reason = ""}).
 -vsn("0.3.4").
@@ -78,7 +79,10 @@ plan(N) when is_integer(N), N > 0 ->
 %% @todo This should probably be done in the test_server process.
 end_tests() ->
     ensure_coverage_ends(),
-    etap_server ! {self(), state},
+    case whereis(etap_server) of
+        undefined -> self() ! true;
+        _ -> etap_server ! {self(), state}
+    end,
     State = receive X -> X end,
     if
         State#test_state.planned == -1 ->
@@ -138,11 +142,44 @@ bail(Reason) ->
     etap_server ! done, ok,
     ok.
 
+%% @spec test_state() -> Return
+%%       Return = test_state_record() | {error, string()}
+%% @doc Return the current test state
+test_state() ->
+    etap_server ! {self(), state},
+    receive
+	X when is_record(X, test_state) -> X
+    after
+	1000 -> {error, "Timed out waiting for etap server reply.~n"}
+    end.
+
+%% @spec failure_count() -> Return
+%%       Return = integer() | {error, string()}
+%% @doc Return the current failure count
+failure_count() ->
+    case test_state() of
+        #test_state{fail=FailureCount} -> FailureCount;
+        X -> X
+    end.
+
+%% @spec msg(S) -> ok
+%%       S = string()
+%% @doc Print a message in the test output.
+msg(S) -> etap_server ! {self(), diag, S}, ok.
+
+%% @spec msg(Format, Data) -> ok
+%%      Format = atom() | string() | binary()
+%%      Data = [term()]
+%%      UnicodeList = [Unicode]
+%%      Unicode = int()
+%% @doc Print a message in the test output.
+%% Function arguments are passed through io_lib:format/2.
+msg(Format, Data) -> msg(io_lib:format(Format, Data)).
 
 %% @spec diag(S) -> ok
 %%       S = string()
 %% @doc Print a debug/status message related to the test suite.
-diag(S) -> etap_server ! {self(), diag, "# " ++ S}, ok.
+diag(S) -> msg("# " ++ S).
 
 %% @spec diag(Format, Data) -> ok
 %%      Format = atom() | string() | binary()
@@ -153,19 +190,56 @@ diag(S) -> etap_server ! {self(), diag, "# " ++ S}, ok.
 %% Function arguments are passed through io_lib:format/2.
 diag(Format, Data) -> diag(io_lib:format(Format, Data)).
 
+%% @spec expectation_mismatch_message(Got, Expected, Desc) -> ok
+%%       Got = any()
+%%       Expected = any()
+%%       Desc = string()
+%% @doc Print an expectation mismatch message in the test output.
+expectation_mismatch_message(Got, Expected, Desc) ->
+    msg("    ---"),
+    msg("    description: ~p", [Desc]),
+    msg("    found:       ~p", [Got]),
+    msg("    wanted:      ~p", [Expected]),
+    msg("    ..."),
+    ok.
+
+% @spec evaluate(Pass, Got, Expected, Desc) -> Result
+%%       Pass = true | false
+%%       Got = any()
+%%       Expected = any()
+%%       Desc = string()
+%%       Result = true | false
+%% @doc Evaluate a test statement, printing an expectation mismatch message
+%%       if the test failed.
+evaluate(Pass, Got, Expected, Desc) ->
+    case mk_tap(Pass, Desc) of
+        false ->
+            expectation_mismatch_message(Got, Expected, Desc),
+            false;
+        true ->
+            true
+    end.
+
 %% @spec ok(Expr, Desc) -> Result
 %%       Expr = true | false
 %%       Desc = string()
 %%       Result = true | false
 %% @doc Assert that a statement is true.
-ok(Expr, Desc) -> mk_tap(Expr == true, Desc).
+ok(Expr, Desc) -> evaluate(Expr == true, Expr, true, Desc).
 
 %% @spec not_ok(Expr, Desc) -> Result
 %%       Expr = true | false
 %%       Desc = string()
 %%       Result = true | false
 %% @doc Assert that a statement is false.
-not_ok(Expr, Desc) -> mk_tap(Expr == false, Desc).
+not_ok(Expr, Desc) -> evaluate(Expr == false, Expr, false, Desc).
+
+%% @spec is_ok(Expr, Desc) -> Result
+%%       Expr = any()
+%%       Desc = string()
+%%       Result = true | false
+%% @doc Assert that two values are the same.
+is_ok(Expr, Desc) -> evaluate(Expr == ok, Expr, ok, Desc).
 
 %% @spec is(Got, Expected, Desc) -> Result
 %%       Got = any()
@@ -173,17 +247,7 @@ not_ok(Expr, Desc) -> mk_tap(Expr == false, Desc).
 %%       Desc = string()
 %%       Result = true | false
 %% @doc Assert that two values are the same.
-is(Got, Expected, Desc) ->
-    case mk_tap(Got == Expected, Desc) of
-        false ->
-            etap_server ! {self(), diag, "    ---"},
-            etap_server ! {self(), diag, io_lib:format("    description: ~p", [Desc])},
-            etap_server ! {self(), diag, io_lib:format("    found:       ~p", [Got])},
-            etap_server ! {self(), diag, io_lib:format("    wanted:      ~p", [Expected])},
-            etap_server ! {self(), diag, "    ..."},
-            false;
-        true -> true
-    end.
+is(Got, Expected, Desc) -> evaluate(Got == Expected, Got, Expected, Desc).
 
 %% @spec isnt(Got, Expected, Desc) -> Result
 %%       Got = any()
@@ -191,7 +255,7 @@ is(Got, Expected, Desc) ->
 %%       Desc = string()
 %%       Result = true | false
 %% @doc Assert that two values are not the same.
-isnt(Got, Expected, Desc) -> mk_tap(Got /= Expected, Desc).
+isnt(Got, Expected, Desc) -> evaluate(Got /= Expected, Got, Expected, Desc).
 
 %% @spec is_greater(ValueA, ValueB, Desc) -> Result
 %%       ValueA = number()
@@ -208,6 +272,8 @@ is_greater(ValueA, ValueB, Desc) when is_integer(ValueA), is_integer(ValueB) ->
 %%       Desc = string()
 %%       Result = true | false
 %% @doc Assert that an item is in a list.
+any(Got, Items, Desc) when is_function(Got) ->
+    is(lists:any(Got, Items), true, Desc);
 any(Got, Items, Desc) ->
     is(lists:member(Got, Items), true, Desc).
 
@@ -217,6 +283,8 @@ any(Got, Items, Desc) ->
 %%       Desc = string()
 %%       Result = true | false
 %% @doc Assert that an item is not in a list.
+none(Got, Items, Desc) when is_function(Got) ->
+    is(lists:any(Got, Items), false, Desc);
 none(Got, Items, Desc) ->
     is(lists:member(Got, Items), false, Desc).
 
@@ -228,6 +296,27 @@ none(Got, Items, Desc) ->
 %% @doc Use an anonymous function to assert a pattern match.
 fun_is(Fun, Expected, Desc) when is_function(Fun) ->
     is(Fun(Expected), true, Desc).
+
+%% @spec expect_fun(ExpectFun, Got, Desc) -> Result
+%%       ExpectFun = function()
+%%       Got = any()
+%%       Desc = string()
+%%       Result = true | false
+%% @doc Use an anonymous function to assert a pattern match, using actual
+%%       value as the argument to the function.
+expect_fun(ExpectFun, Got, Desc) ->
+    evaluate(ExpectFun(Got), Got, ExpectFun, Desc).
+
+%% @spec expect_fun(ExpectFun, Got, Desc, ExpectStr) -> Result
+%%       ExpectFun = function()
+%%       Got = any()
+%%       Desc = string()
+%%       ExpectStr = string()
+%%       Result = true | false
+%% @doc Use an anonymous function to assert a pattern match, using actual
+%%       value as the argument to the function.
+expect_fun(ExpectFun, Got, Desc, ExpectStr) ->
+    evaluate(ExpectFun(Got), Got, ExpectStr, Desc).
 
 %% @equiv skip(TestFun, "")
 skip(TestFun) when is_function(TestFun) ->
