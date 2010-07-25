@@ -51,6 +51,10 @@ Installing
 
 Once you have satisfied the dependencies you should run:
 
+    ./bootstrap
+
+This script will prepare the build directories. The run:
+
     ./configure
 
 This script will configure Pillow to be installed into `/usr/local` by default.
