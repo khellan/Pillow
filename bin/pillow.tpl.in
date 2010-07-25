@@ -283,7 +283,7 @@ stop_pillow () {
 
 remote_command() {
     rpc_command=$1
-    remote_shell="erl -sname pillow1 -remsh pillow@localhost"
+    remote_shell="%ERL% -sname pillow1 -remsh pillow@localhost"
     echo "${rpc_command}" | ${remote_shell}
 }
 
