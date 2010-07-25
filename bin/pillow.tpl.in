@@ -214,7 +214,7 @@ start_pillow () {
         touch $PID_FILE
         interactive_option="+Bd -noinput"
     fi
-    command="/usr/bin/erl -sname pillow $interactive_option -boot start_sasl +K true \
+    command="%ERL% -sname pillow $interactive_option -boot start_sasl +K true \
         -env ERL_LIBS %localerlanglibdir% -pillow_ini $start_arguments -s pillow"
     if test "$BACKGROUND" = "true" -a "$RECURSED" = "false"; then
         $0 $background_start_arguments -b -r $RESPAWN_TIMEOUT -p $PID_FILE \
